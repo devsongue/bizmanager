@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sale {
+  id          String   @id
+  date        DateTime
+  clientId    String
+  clientName  String
+  productId   String
+  productName String
+  quantity    Int
+  unitPrice   Int
+  total       Int
+  saleType    String
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id
+  date        DateTime
+  category    String
+  description String
+  amount      Int
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id            String   @id
+  name          String
+  category      String
+  stock         Int
+  retailPrice   Int
+  wholesalePrice Int
+  supplierId    String?  // Optional supplier ID
+  supplierName  String?  // Optional supplier name
+  business      Business @relation(fields: [businessId], references: [id])
+  businessId    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Client {
+  id        String   @id
+  name      String
+  contact   String
+  balance   Int
+  business  Business @relation(fields: [businessId], references: [id])
+  businessId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id        String   @id
+  name      String
+  product   String
+  business  Business @relation(fields: [businessId], references: [id])
+  businessId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Business {
+  id          String     @id
+  name        String
+  type        String
+  sales       Sale[]
+  expenses    Expense[]
+  products    Product[]
+  clients     Client[]
+  suppliers   Supplier[]
+  users       User[]     @relation("ManagedBusinesses")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model User {
+  id                String     @id
+  name              String
+  email             String     @unique
+  password          String?
+  role              String
+  avatarUrl         String
+  managedBusinesses Business[] @relation("ManagedBusinesses")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
