@@ -1,12 +1,13 @@
 # Deployment Guide for BizManager Application
 
-This guide provides step-by-step instructions for manually deploying the BizManager application on a VPS.
+This guide provides step-by-step instructions for manually deploying the BizManager application on a VPS, as well as using automated deployment through GitHub Actions.
 
 ## Prerequisites
 
 1. A VPS with Ubuntu 20.04 or later (recommended)
 2. Root or sudo access to the VPS
 3. A domain name (optional but recommended for production)
+4. For GitHub Actions deployment: SSH access to your VPS and Docker Hub account
 
 ## Server Setup
 
@@ -46,7 +47,45 @@ sudo mkdir -p /var/lib/bizmanager
 sudo chown $USER:$USER /var/lib/bizmanager
 ```
 
-## Application Deployment
+## GitHub Actions Deployment (Recommended)
+
+The application includes automated deployment workflows using GitHub Actions. There are two workflows:
+
+1. **CI/CD Pipeline** (`ci-cd.yml`) - Runs tests and deploys on every push
+2. **Deploy Pipeline** (`deploy.yml`) - Dedicated deployment workflow that can be triggered manually
+
+### Setting up GitHub Actions Secrets
+
+To use the automated deployment, you need to set up the following secrets in your GitHub repository:
+
+1. Go to your repository settings
+2. Click on "Secrets and variables" → "Actions"
+3. Add the following secrets:
+   - `VPS_HOST`: Your VPS IP address or domain
+   - `VPS_USERNAME`: SSH username for your VPS
+   - `VPS_SSH_KEY`: Private SSH key for accessing your VPS
+   - `VPS_PORT`: SSH port (default: 22)
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Your Docker Hub password or access token
+   - `APP_URL`: The URL where your application will be accessible (e.g., http://your-domain.com)
+
+### Deployment Process
+
+The automated deployment workflow includes:
+
+1. Building the application
+2. Deploying to your VPS via SSH
+3. Creating backups of previous deployments
+4. Running database migrations
+5. Restarting the application with PM2
+6. Building and pushing Docker images
+7. Health checking the deployed application
+
+To trigger the deployment workflow:
+1. Push to the `main` branch, or
+2. Manually trigger the "Deploy to Production" workflow from the GitHub Actions tab
+
+## Manual Application Deployment
 
 ### 1. Clone or Transfer Application Files
 
