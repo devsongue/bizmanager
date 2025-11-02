@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "deploy": "bash deploy.sh",
+    "start:prod": "pm2 start ecosystem.config.js",
+    "stop:prod": "pm2 stop bizmanager",
+    "restart:prod": "pm2 restart bizmanager",
+    "logs:prod": "pm2 logs bizmanager",
+    "docker:build": "docker build -t bizmanager .",
+    "docker:run": "docker run -p 3000:3000 bizmanager",
+    "docker:dev": "docker-compose up -d",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",

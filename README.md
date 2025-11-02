@@ -108,6 +108,50 @@ The application has been tested to ensure all functionality works as expected wi
 
 The application can be deployed to any platform that supports Next.js, such as Vercel, Netlify, or a custom Node.js server.
 
+### Manual VPS Deployment
+
+For manual deployment on a VPS, follow the detailed instructions in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
+### Automated Deployment Scripts
+
+- For Linux servers: [deploy.sh](deploy.sh)
+- For Windows servers: [deploy.bat](deploy.bat)
+
+### Environment Variables for Production
+
+Refer to [.env.production](.env.production) for the required environment variables in production.
+
+### Process Management
+
+The application uses PM2 for process management in production. The configuration is defined in [ecosystem.config.js](ecosystem.config.js).
+
+### CI/CD Pipeline
+
+This project includes a GitHub Actions workflow for CI/CD:
+
+- **Continuous Integration**: Runs on every push and pull request to `main` and `develop` branches
+- **Continuous Deployment**: Automatically deploys to a VPS when changes are pushed to `main`
+- **Docker Build**: Builds and pushes Docker images to DockerHub
+
+The workflow is defined in [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml).
+
+### Docker Deployment
+
+The application can be containerized using the provided [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml):
+
+```bash
+# Build and run with Docker
+make docker-build
+make docker-run
+
+# Or use docker-compose
+make docker-dev
+```
+
+### Makefile Commands
+
+For easier development and deployment, a [Makefile](Makefile) is provided with common commands.
+
 ## License
 
 This project is licensed under the MIT License.
