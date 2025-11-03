@@ -53,8 +53,8 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                 stock: product.stock,
                 retailPrice: product.retailPrice,
                 wholesalePrice: product.wholesalePrice,
-                supplierId: product.supplierId || '',
-                supplierName: product.supplierName || ''
+                supplierId: product.supplierId ?? '',
+                supplierName: product.supplierName ?? ''
             });
         } else {
             setEditingProduct(null);
@@ -80,8 +80,8 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             cost: 0,
             unitCost: unitCost,
             totalCost: 0,
-            supplierId: product.supplierId || '',
-            supplierName: product.supplierName || ''
+            supplierId: product.supplierId ?? '',
+            supplierName: product.supplierName ?? ''
         });
         setIsRestockModalOpen(true);
     };
@@ -300,7 +300,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                         <select
                             id="supplierId"
                             name="supplierId"
-                            value={formData.supplierId}
+                            value={formData.supplierId ?? ''}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
@@ -383,7 +383,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                         <select
                             id="supplierId"
                             name="supplierId"
-                            value={restockData.supplierId}
+                            value={restockData.supplierId ?? ''}
                             onChange={handleRestockChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >

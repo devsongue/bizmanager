@@ -26,8 +26,8 @@ export interface Product {
     stock: number;
     retailPrice: number;
     wholesalePrice: number;
-    supplierId?: string;
-    supplierName?: string;
+    supplierId?: string | null;
+    supplierName?: string | null;
 }
 
 export interface Client {
