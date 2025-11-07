@@ -10,21 +10,9 @@
     "build": "next build",
     "start": "next start",
     "seed": "ts-node prisma/seed.ts",
-    "deploy": "bash deploy.sh",
-    "deploy-win": "deploy.bat",
     "migrate": "prisma migrate deploy",
     "migrate-dev": "prisma migrate dev",
-    "migrate-win": "migrate-db.bat",
-    "migrate-unix": "bash migrate-db.sh",
-    "generate": "prisma generate",
-    "start:prod": "pm2 start ecosystem.config.js",
-    "stop:prod": "pm2 stop bizmanager",
-    "restart:prod": "pm2 restart bizmanager",
-    "logs:prod": "pm2 logs bizmanager",
-    "docker:build": "docker build -t bizmanager .",
-    "docker:run": "docker run -p 3000:3000 bizmanager",
-    "docker:dev": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
