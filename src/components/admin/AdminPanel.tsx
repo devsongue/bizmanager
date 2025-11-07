@@ -271,7 +271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
     // Get top performing businesses with enhanced metrics
     const getTopPerformingBusinesses = (): any[] => {
         return [...displayedBusinesses]
-            .map(business => {
+            .map((business: any) => {
                 const totalRevenue = calculateTotalSalesRevenue(business.sales);
                 const totalExpenses = calculateTotalExpenses(business.expenses);
                 const cogs = calculateCOGS(business.sales, business.products);
@@ -305,7 +305,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
 
     // Get business performance metrics with enhanced calculations
     const getBusinessPerformanceMetrics = () => {
-        const businessesWithMetrics = displayedBusinesses.map(business => {
+        const businessesWithMetrics = displayedBusinesses.map((business: any) => {
             const totalRevenue = calculateTotalSalesRevenue(business.sales);
             const totalExpenses = calculateTotalExpenses(business.expenses);
             const operatingExpenses = calculateOperatingExpenses(business.expenses);
@@ -385,8 +385,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
                         <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                             {totalRevenue > 0 ? formatPercentage(calculateGrossProfitMargin(
-                                displayedBusinesses.flatMap(b => b.sales), 
-                                displayedBusinesses.flatMap(b => b.products)
+                                displayedBusinesses.flatMap((b: any) => b.sales), 
+                                displayedBusinesses.flatMap((b: any) => b.products)
                             )) : '0.00%'}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Revenus - Coût des marchandises vendues</p>
@@ -395,9 +395,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge d'Exploitation</h3>
                         <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {totalRevenue > 0 ? formatPercentage(calculateOperatingProfitMargin(
-                                displayedBusinesses.flatMap(b => b.sales), 
-                                displayedBusinesses.flatMap(b => b.expenses), 
-                                displayedBusinesses.flatMap(b => b.products)
+                                displayedBusinesses.flatMap((b: any) => b.sales), 
+                                displayedBusinesses.flatMap((b: any) => b.expenses), 
+                                displayedBusinesses.flatMap((b: any) => b.products)
                             )) : '0.00%'}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bénéfice après dépenses opérationnelles</p>
