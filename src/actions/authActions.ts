@@ -5,7 +5,7 @@ import { authenticateUser } from './userActions';
 import { ActionResult, SessionPayload } from '@/types';
 
 // Login action
-export async function login(email: string, password: string): Promise<ActionResult<any>> {
+export async function login(email: string, password: string): Promise<ActionResult<unknown>> {
   try {
     // Authenticate user with email and password
     const authResult = await authenticateUser(email, password);

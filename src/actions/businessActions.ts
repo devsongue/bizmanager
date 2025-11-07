@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from '@/lib/prisma';
-import { Business, Sale, Expense, Product, Client, Supplier } from '@/types';
+import { Business } from '@/types';
 
 // Helper function to convert Prisma model to TypeScript interface
 function serializeBusinessData(business: any): Business {

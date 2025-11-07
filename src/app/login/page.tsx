@@ -68,7 +68,7 @@ export default function LoginPage() {
       } else {
         setError('Email ou mot de passe incorrect. Utilisez admin@bizsuite.com / password123');
       }
-    } catch (err) {
+    } catch (_error) {
       setError('Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setIsLoading(false);

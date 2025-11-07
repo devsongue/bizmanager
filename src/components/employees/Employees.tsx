@@ -24,7 +24,7 @@ interface UserFormData {
     managedBusinessIds: string[];
 }
 
-export const Employees: React.FC<EmployeesProps> = ({ users, onAddUser, onUpdateUser, allBusinesses }) => {
+export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [formData, setFormData] = useState<UserFormData>({ 

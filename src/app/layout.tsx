@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
+// Les composants Sidebar et Header sont importés mais non utilisés
+// Ils seront ajoutés dans les pages individuelles
 
 const inter = Inter({ subsets: ["latin"] });
 
