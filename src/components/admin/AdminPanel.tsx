@@ -257,8 +257,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
         if (selectedBusiness) {
             allSales = filterSalesByPeriod(selectedBusiness.sales);
         } else {
-            allSales = displayedBusinesses.flatMap(business => 
-                filterSalesByPeriod(business.sales).map(sale => ({
+            allSales = displayedBusinesses.flatMap((business: any) => 
+                filterSalesByPeriod(business.sales).map((sale: any) => (
                     ...sale,
                     businessName: business.name
                 }))
