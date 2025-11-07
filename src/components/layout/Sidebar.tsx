@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                 <h1 className="text-xl font-bold ml-2 text-gray-800 dark:text-white">BizSuite</h1>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2">
-                {(currentUser.role === 'Admin' ? adminNavItems : navItems).map(item => {
+                {(currentUser.role === 'Admin' ? adminNavItems : navItems).map((item: any) => {
                     // Show admin-only items only to admins
                     if (item.adminOnly && currentUser.role !== 'Admin') return null;
 

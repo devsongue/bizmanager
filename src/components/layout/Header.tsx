@@ -15,7 +15,7 @@ const AlertsDropdown: React.FC<{ products: Product[] }> = ({ products }) => (
     <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-md shadow-xl z-20">
         <div className="p-4 font-bold border-b border-gray-200 dark:border-gray-700">Alertes de Stock Faible</div>
         <ul className="py-2 max-h-64 overflow-y-auto">
-            {products.length > 0 ? products.map(p => (
+            {products.length > 0 ? products.map((p: any) => (
                 <li key={p.id} className="flex justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                     <span>{p.name}</span>
                     <span className="font-bold text-red-600">Stock: {p.stock}</span>
@@ -85,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                             onChange={(e) => setActiveBusinessId(e.target.value)}
                             disabled={businesses.length <= 1}
                         >
-                            {businesses.map(b => (
+                            {businesses.map((b: any) => (
                                 <option key={b.id} value={b.id}>{b.name}</option>
                             ))}
                         </select>

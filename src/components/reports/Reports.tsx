@@ -95,7 +95,7 @@ const BestSellingProductsCard: React.FC<{ products: { productId: string; product
                     <span className="w-24 text-right">Revenu</span>
                 </div>
             </li>
-            {products.length > 0 ? products.map(p => (
+            {products.length > 0 ? products.map((p: any) => (
                 <li key={p.productId} className="flex justify-between items-center text-sm border-t pt-3 px-2">
                     <p className="font-semibold text-gray-700 truncate pr-2" title={p.productName}>{p.productName}</p>
                     <div className="flex space-x-4 font-mono flex-shrink-0">

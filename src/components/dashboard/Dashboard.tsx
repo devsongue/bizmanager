@@ -19,7 +19,7 @@ const LowStockAlerts: React.FC<{ products: Product[] }> = ({ products }) => {
                 Alertes de Stock Faible
             </h3>
             <ul className="space-y-3">
-                {products.map(product => (
+                {products.map((product: any) => (
                     <li key={product.id} className="flex justify-between items-center text-sm">
                         <p className="font-semibold text-gray-700">{product.name}</p>
                         <p className="font-bold text-red-600">Stock restant : {product.stock}</p>

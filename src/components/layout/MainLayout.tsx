@@ -54,7 +54,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     }
     
     // Managers can only manage businesses they're assigned to
-    return businesses.filter(b => currentUser.managedBusinessIds?.includes(b.id));
+    return businesses.filter((b: any) => currentUser.managedBusinessIds?.includes(b.id));
   }, [currentUser, businesses]);
 
   const handleLogout = () => {

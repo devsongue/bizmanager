@@ -198,7 +198,7 @@ export const Employees: React.FC<EmployeesProps> = ({ users, onAddUser, onUpdate
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Entreprises à gérer</label>
                             <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-md">
-                                {allBusinesses.map(business => (
+                                {allBusinesses.map((business: any) => (
                                     <div key={business.id} className="flex items-center">
                                         <input
                                             type="checkbox"

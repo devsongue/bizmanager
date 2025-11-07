@@ -214,7 +214,7 @@ export const ProductList: React.FC<ProductListProps> = ({ products }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredAndSortedProducts.map((product) => (
+                                filteredAndSortedProducts.map((product: any) => (
                                     <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                             {product.name}

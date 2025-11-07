@@ -28,7 +28,7 @@ export const Table = <T extends { id: string },>(
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {data.map((item) => (
+                    {data.map((item: any) => (
                         <tr key={item.id} className="hover:bg-gray-50">
                             {columns.map((col) => (
                                 <td key={String(col.accessor)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
