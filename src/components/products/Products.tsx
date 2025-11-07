@@ -244,7 +244,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             </div>
 
             {/* Low stock alert */}
-            {products.some(p => p.stock < 10) && (
+            {products.some((p: any) => p.stock < 10) && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                     <div className="flex">
                         <div className="flex-shrink-0">
