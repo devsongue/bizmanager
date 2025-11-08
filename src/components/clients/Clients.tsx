@@ -9,14 +9,14 @@ import { useClients, useCreateClient } from '@/hooks/useClient';
 
 interface ClientsProps {
     business: Business;
-    // onAddClient: (newClient: Client) => void; // Paramètre non utilisé
-    // onRecordPayment: (clientId: string, amount: number) => void; // Paramètre non utilisé
+    onAddClient: (newClient: Client) => void;
+    onRecordPayment: (clientId: string, amount: number) => void;
 }
 
-export const Clients: React.FC<ClientsProps> = ({ business }) => {
+export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecordPayment }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    // const [selectedClientId, setSelectedClientId] = useState(''); // Variable non utilisée
+    const [selectedClientId, setSelectedClientId] = useState('');
     const [paymentAmount, setPaymentAmount] = useState(0);
     const [formData, setFormData] = useState<Omit<Client, 'id' | 'balance'>>({ 
         name: '', 
@@ -31,8 +31,8 @@ export const Clients: React.FC<ClientsProps> = ({ business }) => {
         setIsModalOpen(true);
     };
 
-    const handleOpenPaymentModal = (_clientId: string) => {
-        // setSelectedClientId(clientId); // Variable non utilisée
+    const handleOpenPaymentModal = (clientId: string) => {
+        setSelectedClientId(clientId);
         setPaymentAmount(0);
         setIsPaymentModalOpen(true);
     };
@@ -43,7 +43,7 @@ export const Clients: React.FC<ClientsProps> = ({ business }) => {
 
     const handleClosePaymentModal = () => {
         setIsPaymentModalOpen(false);
-        // setSelectedClientId(''); // Variable non utilisée
+        setSelectedClientId('');
         setPaymentAmount(0);
     };
 
@@ -73,7 +73,7 @@ export const Clients: React.FC<ClientsProps> = ({ business }) => {
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // onRecordPayment(selectedClientId, paymentAmount); // Fonction non utilisée
+        onRecordPayment(selectedClientId, paymentAmount);
         handleClosePaymentModal();
     };
 
