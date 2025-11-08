@@ -5,15 +5,15 @@ import type { Business, Expense } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { Table } from '../shared/Table';
-// import { DateFilter } from '../shared'; // Import non utilisé
+import { DateFilter } from '../shared';
 import { useExpenses, useCreateExpense } from '@/hooks/useExpense';
 
 interface ExpensesProps {
     business: Business;
-    // onAddExpense: (newExpense: Expense) => void; // Paramètre non utilisé
+    onAddExpense: (newExpense: Expense) => void;
 }
 
-export const Expenses: React.FC<ExpensesProps> = ({ business }) => {
+export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState<Omit<Expense, 'id'>>({ 
         date: new Date().toISOString().split('T')[0], 
