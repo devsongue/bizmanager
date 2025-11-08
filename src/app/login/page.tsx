@@ -12,8 +12,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState('/dashboard');
   const router = useRouter();
   const { login, currentUser } = useAuth();
+
+  // Get redirect URL from localStorage (set by middleware)
+  useEffect(() => {
+    const storedRedirect = localStorage.getItem('redirectUrl');
+    if (storedRedirect) {
+      setRedirectUrl(storedRedirect);
+      localStorage.removeItem('redirectUrl');
+    }
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -63,7 +73,7 @@ export default function LoginPage() {
       if (success) {
         // Add a small delay to ensure state is updated before redirect
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push(redirectUrl);
         }, 100);
       } else {
         setError('Email ou mot de passe incorrect. Utilisez admin@bizsuite.com / password123');
@@ -76,7 +86,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-gray-100 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center w-full justify-center bg-gradient-to-br from-primary-50 to-gray-100 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
         <div>
           <div className="mx-auto h-16 w-16 rounded-full bg-primary-500 flex items-center justify-center">
@@ -208,37 +218,23 @@ export default function LoginPage() {
                   Connexion en cours...
                 </>
               ) : (
-                <>
-                  <svg className="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Se connecter
-                </>
+                "Se connecter"
               )}
             </Button>
           </div>
         </form>
         
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                Nouveau sur BizSuite?
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <Button
-              variant="secondary"
-              className="w-full flex justify-center py-3 px-4 rounded-lg"
-            >
-              Créer un compte
-            </Button>
-          </div>
+        <div className="mt-6 text-center text-sm text-gray-600">
+          <p>
+            En vous connectant, vous acceptez nos{' '}
+            <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+              Conditions d'utilisation
+            </a>{' '}
+            et notre{' '}
+            <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+              Politique de confidentialité
+            </a>.
+          </p>
         </div>
       </div>
     </div>
