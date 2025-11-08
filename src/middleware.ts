@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
-// Fonction pour vérifier le token JWT
+// Fonction pour vérifier le token simulé
 async function verifyToken(token: string) {
   try {
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'fallback-secret-key-change-this');
-    const { payload } = await jwtVerify(token, secret);
-    return payload;
+    // Décoder le token simulé (base64)
+    const decoded = atob(token);
+    const payload = JSON.parse(decoded);
+    
+    // Vérifier si le token n'a pas expiré
+    if (payload.exp && payload.exp > Date.now()) {
+      return payload;
+    }
+    
+    return null;
   } catch (error) {
     return null;
   }
@@ -44,9 +50,9 @@ export async function middleware(request: NextRequest) {
   if (!token) {
     // Rediriger vers la page de login si aucun token n'est présent
     const loginUrl = new URL('/login', request.url);
-    // Stocker l'URL de redirection dans un cookie
+    // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
     const response = NextResponse.redirect(loginUrl);
-    response.cookies.set('redirect-url', pathname, {
+    response.cookies.set('redirect-url', encodeURIComponent(pathname), {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 5, // 5 minutes
@@ -62,9 +68,9 @@ export async function middleware(request: NextRequest) {
     if (!payload) {
       // Token invalide, rediriger vers la page de login
       const loginUrl = new URL('/login', request.url);
-      // Stocker l'URL de redirection dans un cookie
+      // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.set('redirect-url', pathname, {
+      response.cookies.set('redirect-url', encodeURIComponent(pathname), {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 5, // 5 minutes
@@ -79,9 +85,9 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     // Erreur lors de la vérification du token, rediriger vers la page de login
     const loginUrl = new URL('/login', request.url);
-    // Stocker l'URL de redirection dans un cookie
+    // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
     const response = NextResponse.redirect(loginUrl);
-    response.cookies.set('redirect-url', pathname, {
+    response.cookies.set('redirect-url', encodeURIComponent(pathname), {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 5, // 5 minutes
