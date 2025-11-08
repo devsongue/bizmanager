@@ -67,7 +67,7 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
 
     const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const productId = e.target.value;
-        const product = products.find((p) => p.id === productId);
+        const product = products.find((p: Product) => p.id === productId);
         if (product) {
             setFormData(prev => ({
                 ...prev,
@@ -92,7 +92,7 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
 
     const handleSaleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const saleType = e.target.value as 'Vente au détail' | 'Vente en gros';
-        const product = products.find((p) => p.id === formData.productId);
+        const product = products.find((p: Product) => p.id === formData.productId);
         setFormData(prev => ({
             ...prev,
             saleType,
