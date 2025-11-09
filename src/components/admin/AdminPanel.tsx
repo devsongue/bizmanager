@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import type { Business, User, Sale, Expense, Product } from '@/types';
 import { useBusinesses } from '@/hooks/useBusiness';
 import { useUsers } from '@/hooks/useUser';
-import { ProductList } from './ProductList';
 
 interface AdminPanelProps {
     allBusinesses: Business[];
@@ -921,7 +920,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                             </select>
                         </div>
                     </div>
-                    <ProductList products={getAllProducts()} />
+                    
                 </div>
             )}
         </div>
