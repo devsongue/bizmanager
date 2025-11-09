@@ -4,12 +4,14 @@ import React from 'react';
 import { Clients } from '@/components/clients/Clients';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useBusinesses } from '@/hooks/useBusiness';
-import { useCreateClient } from '@/hooks/useClient';
+import { useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClient';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ClientsPage() {
   const { data: businesses = [], isLoading: isBusinessesLoading } = useBusinesses();
   const { mutateAsync: createClient } = useCreateClient();
+  const { mutateAsync: updateClient } = useUpdateClient();
+  const { mutateAsync: deleteClient } = useDeleteClient();
   const { currentUser } = useAuth();
   
   if (isBusinessesLoading) {
@@ -21,6 +23,8 @@ export default function ClientsPage() {
       <ClientsPageContent 
         businesses={businesses} 
         createClient={createClient} 
+        updateClient={updateClient}
+        deleteClient={deleteClient}
         currentUser={currentUser} 
       />
     </MainLayout>
@@ -30,11 +34,15 @@ export default function ClientsPage() {
 // Composant séparé pour le contenu de la page
 const ClientsPageContent = ({ 
   businesses, 
-  createClient, 
+  createClient,
+  updateClient,
+  deleteClient,
   currentUser 
 }: { 
   businesses: any[]; 
   createClient: any; 
+  updateClient: any;
+  deleteClient: any;
   currentUser: any; 
 }) => {
   // Filtrer les entreprises en fonction de l'utilisateur actuel
@@ -59,9 +67,25 @@ const ClientsPageContent = ({
   
   const handleAddClient = async (newClient: any) => {
     try {
-      await createClient(newClient);
+      await createClient({ businessId: activeBusiness.id, data: newClient });
     } catch (error) {
       console.error('Error creating client:', error);
+    }
+  };
+  
+  const handleUpdateClient = async (updatedClient: any) => {
+    try {
+      await updateClient({ id: updatedClient.id, data: updatedClient });
+    } catch (error) {
+      console.error('Error updating client:', error);
+    }
+  };
+  
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      await deleteClient(clientId);
+    } catch (error) {
+      console.error('Error deleting client:', error);
     }
   };
   
