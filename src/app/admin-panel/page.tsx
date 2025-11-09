@@ -5,6 +5,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useBusinesses } from '@/hooks/useBusiness';
 import { useUsers } from '@/hooks/useUser';
+import { SimplifiedDashboard } from '@/components/admin/SimplifiedDashboard';
 
 export default function AdminPanelPage() {
   const { data: businesses = [], isLoading: isBusinessesLoading } = useBusinesses();
@@ -17,7 +18,7 @@ export default function AdminPanelPage() {
   return (
     <MainLayout businesses={businesses}>
       <div className="p-4 md:p-8">
-        <AdminPanel allBusinesses={businesses} allUsers={users} />
+        <SimplifiedDashboard allBusinesses={businesses} allUsers={users} />
       </div>
     </MainLayout>
   );
