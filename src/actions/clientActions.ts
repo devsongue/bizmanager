@@ -18,14 +18,18 @@ export async function getClients(businessId: string) {
 }
 
 // Create a new client
-export async function createClient(businessId: string, clientData: Omit<Client, 'id'>) {
+export async function createClient(businessId: string, clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
     const client = await prisma.client.create({
       data: {
         id: `client-${Date.now()}`,
         name: clientData.name,
         contact: clientData.contact,
+        telephone: clientData.telephone,  // Ajout du champ
         balance: clientData.balance,
+        email: clientData.email,
+        address: clientData.address,
+        company: clientData.company,
         business: {
           connect: { id: businessId },
         },

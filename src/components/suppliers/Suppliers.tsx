@@ -16,7 +16,10 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState<Omit<Supplier, 'id'>>({ 
         name: '', 
-        product: '' 
+        product: '',
+        contacts: '',
+        description: '',
+        productTypes: ''
     });
 
     const { data: suppliers = [], isLoading } = useSuppliers(business.id);
@@ -31,7 +34,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         setIsModalOpen(false);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
@@ -51,9 +54,9 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         handleCloseModal();
     };
 
-    const columns = [
-        { header: 'Nom', accessor: 'name' as keyof Supplier },
-        { header: 'Produit', accessor: 'product' as keyof Supplier }
+    const columns: any[] = [
+        { header: 'Nom', accessor: 'name' },
+        { header: 'Produit', accessor: 'product' }
     ];
 
     if (isLoading) {
@@ -98,6 +101,39 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="contacts" className="block text-sm font-medium text-gray-700 mb-1">Contacts</label>
+                        <input
+                            type="text"
+                            id="contacts"
+                            name="contacts"
+                            value={formData.contacts || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="productTypes" className="block text-sm font-medium text-gray-700 mb-1">Types de produits</label>
+                        <input
+                            type="text"
+                            id="productTypes"
+                            name="productTypes"
+                            value={formData.productTypes || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            value={formData.description || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            rows={3}
                         />
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">

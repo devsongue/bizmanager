@@ -34,13 +34,26 @@ export interface Client {
     id: string;
     name: string;
     contact: string;
+    telephone?: string | null;  // Ajout du champ numéro de téléphone
     balance: number;
+    email?: string | null;  // Match Prisma type
+    address?: string | null;  // Match Prisma type
+    company?: string | null;  // Match Prisma type
+    // businessId is managed by Prisma relation, not needed in client interface
+    createdAt?: Date;  // Match Prisma type
+    updatedAt?: Date;  // Match Prisma type
 }
 
 export interface Supplier {
     id: string;
     name: string;
     product: string;
+    contacts?: string | null;  // Match Prisma type
+    description?: string | null;  // Match Prisma type
+    productTypes?: string | null;  // Match Prisma type
+    // businessId is managed by Prisma relation, not needed in client interface
+    createdAt?: Date;  // Match Prisma type
+    updatedAt?: Date;  // Match Prisma type
 }
 
 export interface Business {

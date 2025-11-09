@@ -61,7 +61,11 @@ model Client {
   id        String   @id
   name      String
   contact   String
+  telephone String?  // Ajout du champ numéro de téléphone
   balance   Int
+  email     String?  // Add missing field
+  address   String?  // Add missing field
+  company   String?  // Add missing field
   business  Business @relation(fields: [businessId], references: [id])
   businessId String
   createdAt DateTime @default(now())
@@ -69,13 +73,16 @@ model Client {
 }
 
 model Supplier {
-  id        String   @id
-  name      String
-  product   String
-  business  Business @relation(fields: [businessId], references: [id])
-  businessId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id
+  name        String
+  product     String
+  contacts    String?  // New field for supplier contacts
+  description String?  // New field for supplier description
+  productTypes String? // New field for types of products they provide
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Business {

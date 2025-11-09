@@ -6,7 +6,11 @@ import { User, ActionResult } from '@/types';
 // Fetch all users
 export async function getUsers(): Promise<ActionResult<User[]>> {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      include: {
+        managedBusinesses: true
+      }
+    });
     // Map Prisma user objects to our User interface
     const mappedUsers: User[] = users.map((user: any) => ({
       id: user.id,
@@ -15,6 +19,7 @@ export async function getUsers(): Promise<ActionResult<User[]>> {
       password: user.password ?? undefined,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || []
     }));
     return { success: true, data: mappedUsers };
   } catch (error) {
@@ -35,15 +40,28 @@ export async function createUser(userData: Omit<User, 'id'>): Promise<ActionResu
       return { success: false, error: 'User with this email already exists' };
     }
     
+    // Préparer les données pour la création
+    const createData: any = {
+      id: `user-${Date.now()}`,
+      name: userData.name,
+      email: userData.email,
+      password: userData.password ?? null,
+      role: userData.role,
+      avatarUrl: userData.avatarUrl,
+    };
+    
+    // Si l'utilisateur est un gérant avec des entreprises assignées, les connecter
+    if (userData.role === 'Gérant' && userData.managedBusinessIds && userData.managedBusinessIds.length > 0) {
+      createData.managedBusinesses = {
+        connect: userData.managedBusinessIds.map(id => ({ id }))
+      };
+    }
+    
     const user = await prisma.user.create({
-      data: {
-        id: `user-${Date.now()}`,
-        name: userData.name,
-        email: userData.email,
-        password: userData.password ?? null,
-        role: userData.role,
-        avatarUrl: userData.avatarUrl,
-      },
+      data: createData,
+      include: {
+        managedBusinesses: true
+      }
     });
     
     // Map to our User interface
@@ -54,27 +72,55 @@ export async function createUser(userData: Omit<User, 'id'>): Promise<ActionResu
       password: user.password ?? undefined,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || []
     };
     
     return { success: true, data: mappedUser };
   } catch (error) {
     console.error('Error creating user:', error);
-    return { success: false, error: 'Failed to create user' };
+    return { success: false, error: 'Failed to create user: ' + (error as Error).message };
   }
 }
 
 // Update a user
 export async function updateUser(id: string, userData: Partial<User>): Promise<ActionResult<User>> {
   try {
+    // Préparer les données pour la mise à jour
+    const updateData: any = {
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      avatarUrl: userData.avatarUrl,
+    };
+    
+    // Mettre à jour le mot de passe seulement s'il est fourni
+    if (userData.password !== undefined) {
+      updateData.password = userData.password ?? null;
+    }
+    
+    // Gérer l'assignation des entreprises selon le rôle
+    if (userData.role === 'Admin') {
+      // Un admin ne gère aucune entreprise spécifique
+      updateData.managedBusinesses = {
+        set: []
+      };
+    } else if (userData.role === 'Gérant') {
+      // Un gérant peut être assigné à une ou plusieurs entreprises
+      // Si managedBusinessIds est fourni, on met à jour les assignations
+      // Sinon, on garde les assignations existantes
+      if (userData.managedBusinessIds !== undefined) {
+        updateData.managedBusinesses = {
+          set: userData.managedBusinessIds.map(id => ({ id }))
+        };
+      }
+    }
+    
     const user = await prisma.user.update({
       where: { id },
-      data: {
-        name: userData.name,
-        email: userData.email,
-        password: userData.password ?? null,
-        role: userData.role,
-        avatarUrl: userData.avatarUrl,
-      },
+      data: updateData,
+      include: {
+        managedBusinesses: true
+      }
     });
     
     // Map to our User interface
@@ -85,12 +131,13 @@ export async function updateUser(id: string, userData: Partial<User>): Promise<A
       password: user.password ?? undefined,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || []
     };
     
     return { success: true, data: mappedUser };
   } catch (error) {
     console.error('Error updating user:', error);
-    return { success: false, error: 'Failed to update user' };
+    return { success: false, error: 'Failed to update user: ' + (error as Error).message };
   }
 }
 
@@ -113,6 +160,9 @@ export async function authenticateUser(email: string, password: string): Promise
   try {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        managedBusinesses: true
+      }
     });
     
     // Check if user exists and password matches
@@ -125,7 +175,7 @@ export async function authenticateUser(email: string, password: string): Promise
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
-        managedBusinessIds: [] // This would need to be populated from relations in a full implementation
+        managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || []
       };
       return { success: true, data: userWithoutPassword };
     }

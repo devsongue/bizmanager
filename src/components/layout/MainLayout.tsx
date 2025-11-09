@@ -71,7 +71,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   }
 
   return (
-    <>
+    <div className="flex w-full">
       <Sidebar currentUser={currentUser} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
@@ -86,6 +86,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           {children}
         </main>
       </div>
-    </>
+    </div>
   );
 };

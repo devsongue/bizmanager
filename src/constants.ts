@@ -67,16 +67,16 @@ export const getDateRange = (filter: string) => {
 export const mockUsers: User[] = [
     {
         id: 'user-1',
-        name: 'Admin Principal',
-        email: 'admin@bizsuite.com',
+        name: 'Koffi Adjoa',
+        email: 'koffi.adjoa@bizsuite.ci',
         password: 'password123',
         role: 'Admin',
         avatarUrl: 'https://i.pravatar.cc/150?u=admin',
     },
     {
         id: 'user-2',
-        name: 'Jean Gérant',
-        email: 'jean@bizsuite.com',
+        name: 'Awa Diallo',
+        email: 'awa.diallo@bizsuite.ci',
         password: 'password123',
         role: 'Gérant',
         avatarUrl: 'https://i.pravatar.cc/150?u=gerant',
@@ -87,51 +87,51 @@ export const mockUsers: User[] = [
 export const mockBusinesses: Business[] = [
     {
         id: 'biz-1',
-        name: 'Boutique Chez Jean',
+        name: 'Boutique Adjamé',
         type: 'Commerce de détail',
         sales: [
-            { id: 'sale-1', date: '2023-10-26', clientId: 'client-1', clientName: 'Alice Dubois', productId: 'prod-1', productName: 'Savon', quantity: 10, unitPrice: 500, total: 5000, saleType: 'Vente en gros' },
-            { id: 'sale-2', date: '2023-10-25', clientId: 'client-2', clientName: 'Bob Martin', productId: 'prod-2', productName: 'Huile', quantity: 5, unitPrice: 1500, total: 7500, saleType: 'Vente au détail' },
-            { id: 'sale-3', date: '2023-09-15', clientId: 'client-1', clientName: 'Alice Dubois', productId: 'prod-3', productName: 'Riz 5kg', quantity: 2, unitPrice: 3500, total: 7000, saleType: 'Vente au détail' },
+            { id: 'sale-1', date: '2023-10-26', clientId: 'client-1', clientName: 'Amara Koné', productId: 'prod-1', productName: 'Attiéké 1kg', quantity: 5, unitPrice: 500, total: 2500, saleType: 'Vente en gros' },
+            { id: 'sale-2', date: '2023-10-25', clientId: 'client-2', clientName: 'Yao Assi', productId: 'prod-2', productName: 'Huile de palme 50cl', quantity: 3, unitPrice: 1200, total: 3600, saleType: 'Vente au détail' },
+            { id: 'sale-3', date: '2023-09-15', clientId: 'client-1', clientName: 'Amara Koné', productId: 'prod-3', productName: 'Savon de Marseille', quantity: 2, unitPrice: 600, total: 1200, saleType: 'Vente au détail' },
         ],
         expenses: [
             { id: 'exp-1', date: '2023-10-20', category: 'Salaire', description: 'Salaire employé', amount: 75000 },
-            { id: 'exp-2', date: '2023-10-15', category: 'Services publics', description: 'Facture électricité', amount: 15000 },
-             { id: 'exp-3', date: '2023-09-10', category: 'Recharge', description: 'Achat de crédit', amount: 10000 },
+            { id: 'exp-2', date: '2023-10-15', category: 'Services publics', description: 'Facture CIE', amount: 15000 },
+            { id: 'exp-3', date: '2023-09-10', category: 'Télécommunications', description: 'Achat de crédit mobile', amount: 10000 },
         ],
         products: [
-            { id: 'prod-1', name: 'Savon', category: 'Hygiène', stock: 100, retailPrice: 550, wholesalePrice: 500 },
-            { id: 'prod-2', name: 'Huile', category: 'Alimentation', stock: 8, retailPrice: 1500, wholesalePrice: 1400 },
-            { id: 'prod-3', name: 'Riz 5kg', category: 'Alimentation', stock: 80, retailPrice: 3500, wholesalePrice: 3300 },
-            { id: 'prod-4', name: 'Lait en poudre', category: 'Alimentation', stock: 5, retailPrice: 2000, wholesalePrice: 1800 },
+            { id: 'prod-1', name: 'Attiéké 1kg', category: 'Alimentation', stock: 50, retailPrice: 500, wholesalePrice: 450 },
+            { id: 'prod-2', name: 'Huile de palme 50cl', category: 'Alimentation', stock: 30, retailPrice: 1200, wholesalePrice: 1100 },
+            { id: 'prod-3', name: 'Savon de Marseille', category: 'Hygiène', stock: 100, retailPrice: 600, wholesalePrice: 550 },
+            { id: 'prod-4', name: 'Café Ivoirien 500g', category: 'Alimentation', stock: 25, retailPrice: 2500, wholesalePrice: 2300 },
         ],
         clients: [
-            { id: 'client-1', name: 'Alice Dubois', contact: '771234567', balance: -12000 }, // Updated balance
-            { id: 'client-2', name: 'Bob Martin', contact: '781234567', balance: 2500 }, // Updated balance
+            { id: 'client-1', name: 'Amara Koné', contact: '01 23 45 67', telephone: '07 01 23 45 67', email: 'amara.kone@email.ci', address: 'Abidjan, Cocody', balance: -12000 },
+            { id: 'client-2', name: 'Yao Assi', contact: '02 34 56 78', telephone: '05 45 67 89 01', email: 'yao.assi@email.ci', address: 'Abidjan, Treichville', balance: 2500 },
         ],
         suppliers: [
-            { id: 'sup-1', name: 'Grossiste Dakar', product: 'Produits alimentaires' },
-            { id: 'sup-2', name: 'Savonnerie du coin', product: 'Savons et détergents' },
+            { id: 'sup-1', name: 'Grossiste Abidjan', product: 'Produits alimentaires', contacts: '01 20 30 40', description: 'Fournisseur de produits alimentaires locaux', productTypes: 'Produits de base, épicerie' },
+            { id: 'sup-2', name: 'Savonnerie d\'Abidjan', product: 'Savons et détergents', contacts: '02 21 31 41', description: 'Fabricant local de savons artisanaux', productTypes: 'Savons, détergents, produits d\'entretien' },
         ]
     },
     {
         id: 'biz-2',
-        name: 'Presta Services SARL',
+        name: 'Services Numériques CI',
         type: 'Fourniture de services',
         sales: [
-             { id: 'sale-b2-1', date: '2023-10-22', clientId: 'client-b2-1', clientName: 'Entreprise A', productId: 'prod-b2-1', productName: 'Maintenance Informatique', quantity: 1, unitPrice: 150000, total: 150000, saleType: 'Vente au détail' },
+             { id: 'sale-b2-1', date: '2023-10-22', clientId: 'client-b2-1', clientName: 'Société Ivoirienne de Services', productId: 'prod-b2-1', productName: 'Maintenance Informatique', quantity: 1, unitPrice: 150000, total: 150000, saleType: 'Vente au détail' },
         ],
         expenses: [
-            { id: 'exp-b2-1', date: '2023-10-05', category: 'Loyer', description: 'Loyer bureau Octobre', amount: 200000 },
+            { id: 'exp-b2-1', date: '2023-10-05', category: 'Loyer', description: 'Loyer bureau Abidjan', amount: 200000 },
         ],
         products: [
             { id: 'prod-b2-1', name: 'Maintenance Informatique', category: 'Service', stock: 999, retailPrice: 150000, wholesalePrice: 150000 },
         ],
         clients: [
-            { id: 'client-b2-1', name: 'Entreprise A', contact: '338000000', balance: -150000 }, // Updated balance
+            { id: 'client-b2-1', name: 'Société Ivoirienne de Services', contact: '03 45 67 89', telephone: '01 50 60 70 80', email: 'contact@siv.ci', address: 'Abidjan, Plateau', balance: -150000 },
         ],
         suppliers: [
-            { id: 'sup-b2-1', name: 'Papeterie Pro', product: 'Fournitures de bureau' },
+            { id: 'sup-b2-1', name: 'Fournitures Bureau CI', product: 'Fournitures de bureau', contacts: '03 22 32 42', description: 'Spécialiste en fournitures de bureau et informatiques', productTypes: 'Fournitures de bureau, équipements informatiques' },
         ]
     }
 ];

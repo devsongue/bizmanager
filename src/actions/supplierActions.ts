@@ -18,13 +18,16 @@ export async function getSuppliers(businessId: string) {
 }
 
 // Create a new supplier
-export async function createSupplier(businessId: string, supplierData: Omit<Supplier, 'id'>) {
+export async function createSupplier(businessId: string, supplierData: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
     const supplier = await prisma.supplier.create({
       data: {
         id: `sup-${Date.now()}`,
         name: supplierData.name,
         product: supplierData.product,
+        contacts: supplierData.contacts,
+        description: supplierData.description,
+        productTypes: supplierData.productTypes,
         business: {
           connect: { id: businessId },
         },

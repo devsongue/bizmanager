@@ -13,7 +13,10 @@ export const useUsers = () => {
   return useQuery({
     queryKey: ['users'],
     queryFn: getUsers,
-    select: (data) => data.success ? data.data : [],
+    select: (data) => {
+      console.log('Users fetched:', data);
+      return data.success ? data.data : [];
+    },
   });
 };
 

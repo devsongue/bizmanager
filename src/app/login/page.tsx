@@ -75,7 +75,21 @@ export default function LoginPage() {
       if (success) {
         // Get redirect URL from cookie and decode it
         const redirectUrlEncoded = getCookie('redirect-url');
-        const redirectUrl = redirectUrlEncoded ? decodeURIComponent(redirectUrlEncoded) : '/dashboard';
+        
+        // Check if user is a manager with assigned businesses
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        let redirectUrl = '/dashboard';
+        
+        if (user.role === 'Gérant' && user.managedBusinessIds && user.managedBusinessIds.length > 0) {
+          // Redirect manager to their first assigned business
+          redirectUrl = `/business/${user.managedBusinessIds[0]}`;
+        } else if (user.role === 'Admin') {
+          // Admin can access all businesses, redirect to dashboard
+          redirectUrl = '/dashboard';
+        } else if (redirectUrlEncoded) {
+          // Use stored redirect URL if available
+          redirectUrl = decodeURIComponent(redirectUrlEncoded);
+        }
         
         // Clear the redirect cookie
         document.cookie = 'redirect-url=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
