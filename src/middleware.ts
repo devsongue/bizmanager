@@ -26,6 +26,10 @@ export async function middleware(request: NextRequest) {
   const publicPaths = ['/login', '/api/health'];
   const isPublicPath = publicPaths.some(path => pathname === path);
   
+  // Chemins pour les ressources statiques qui ne doivent jamais être stockés pour redirection
+  const staticPaths = ['/logo.png', '/favicon.ico'];
+  const isStaticPath = staticPaths.some(path => pathname === path);
+  
   // Obtenir le token depuis les cookies
   const token = request.cookies.get('auth-token')?.value;
   
@@ -46,19 +50,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
+  // Ne pas stocker les redirections pour les ressources statiques
+  if (isStaticPath) {
+    return NextResponse.next();
+  }
+  
   // Pour les chemins protégés, vérifier l'authentification
   if (!token) {
     // Rediriger vers la page de login si aucun token n'est présent
     const loginUrl = new URL('/login', request.url);
     // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
+    // Ne pas stocker les redirections pour les ressources statiques
     const response = NextResponse.redirect(loginUrl);
-    response.cookies.set('redirect-url', encodeURIComponent(pathname), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 5, // 5 minutes
-      path: '/',
-      sameSite: 'strict',
-    });
+    if (!isStaticPath) {
+      response.cookies.set('redirect-url', encodeURIComponent(pathname), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 5, // 5 minutes
+        path: '/',
+        sameSite: 'strict',
+      });
+    }
     return response;
   }
   
@@ -70,13 +82,15 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url);
       // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.set('redirect-url', encodeURIComponent(pathname), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 5, // 5 minutes
-        path: '/',
-        sameSite: 'strict',
-      });
+      if (!isStaticPath) {
+        response.cookies.set('redirect-url', encodeURIComponent(pathname), {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 5, // 5 minutes
+          path: '/',
+          sameSite: 'strict',
+        });
+      }
       return response;
     }
     
@@ -87,13 +101,15 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url);
     // Stocker l'URL de redirection dans un cookie (encodée pour éviter les problèmes d'URL)
     const response = NextResponse.redirect(loginUrl);
-    response.cookies.set('redirect-url', encodeURIComponent(pathname), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 5, // 5 minutes
-      path: '/',
-      sameSite: 'strict',
-    });
+    if (!isStaticPath) {
+      response.cookies.set('redirect-url', encodeURIComponent(pathname), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 5, // 5 minutes
+        path: '/',
+        sameSite: 'strict',
+      });
+    }
     return response;
   }
 }

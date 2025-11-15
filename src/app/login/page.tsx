@@ -32,12 +32,17 @@ export default function LoginPage() {
         }, {} as Record<string, string>);
         
         // Decode the redirect URL if it exists
-        const redirectUrl = cookies['redirect-url'] ? 
+        let redirectUrl = cookies['redirect-url'] ? 
           decodeURIComponent(cookies['redirect-url']) : 
           '/dashboard';
         
         // Clear the redirect cookie
         document.cookie = 'redirect-url=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        
+        // Validate redirect URL to prevent redirecting to logo or other invalid paths
+        if (redirectUrl === '/logo.png' || redirectUrl === '/favicon.ico' || !redirectUrl.startsWith('/')) {
+          redirectUrl = '/dashboard';
+        }
         
         // Add a small delay to ensure state is updated before redirect
         setTimeout(() => {
