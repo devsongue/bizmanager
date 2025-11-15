@@ -47,6 +47,12 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
         ? businesses.reduce((total, business) => total + (business.products?.filter(p => p.stock < 10).length || 0), 0)
         : lowStockProducts.length;
 
+    // Handle business switch with persistence
+    const handleBusinessSwitch = (businessId: string) => {
+        setActiveBusinessId(businessId);
+        // The persistence is handled in MainLayout via useEffect
+    };
+
     return (
         <header className="flex items-center justify-between h-20 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
             <div>
@@ -84,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                         <select 
                             className="appearance-none w-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white dark:focus:bg-gray-600 focus:border-primary-500"
                             value={activeBusiness.id}
-                            onChange={(e) => setActiveBusinessId(e.target.value)}
+                            onChange={(e) => handleBusinessSwitch(e.target.value)}
                         >
                             {businesses.map((b: any) => (
                                 <option key={b.id} value={b.id}>{b.name}</option>
@@ -114,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                         <div>
                             <span className="text-sm font-semibold text-gray-700 dark:text-white">{currentUser.name}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-300 block">
-                                {currentUser.role === 'ADMIN' ? 'Administrateur' : 'Gérant'}
+                                {currentUser.role === 'ADMIN' ? 'Administrateur' : 'MANAGER'}
                             </span>
                         </div>
                          <svg className={`w-4 h-4 text-gray-500 dark:text-gray-300 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

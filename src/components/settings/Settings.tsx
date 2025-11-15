@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { Business } from '@/types';
+import type { Business, BusinessType } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { Table } from '../shared/Table';
@@ -24,10 +24,13 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
-    const [formData, setFormData] = useState<Omit<Business, 'id' | 'sales' | 'expenses' | 'products' | 'clients' | 'suppliers'>>({
+    const [formData, setFormData] = useState<Omit<Business, 'id' | 'sales' | 'expenses' | 'products' | 'clients' | 'suppliers' | 'createdAt' | 'updatedAt' | 'deletedAt'>>({
         name: '',
-        type: ''
+        type: 'SHOP' as BusinessType
     });
+
+    // État pour la recherche d'entreprises
+    const [searchTerm, setSearchTerm] = useState('');
 
     const { data: fetchedBusinesses = [], isLoading } = useBusinesses();
     const createBusinessMutation = useCreateBusiness();
@@ -45,7 +48,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
         } else {
             setIsEditing(false);
             setCurrentBusiness(null);
-            setFormData({ name: '', type: '' });
+            setFormData({ name: '', type: 'SHOP' as BusinessType });
         }
         setIsModalOpen(true);
     };
@@ -207,21 +210,41 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
     // Use fetched businesses if available, otherwise use the prop businesses
     const displayedBusinesses = fetchedBusinesses.length > 0 ? fetchedBusinesses : businesses;
 
+    // Filtrer les entreprises en fonction du terme de recherche
+    const filteredBusinesses = displayedBusinesses.filter(business =>
+        business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        business.type.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Paramètres des Entreprises</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-2">
                         Gérez vos entreprises et accédez à leurs tableaux de bord
                     </p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    Ajouter une Entreprise
-                </Button>
+                <div className="flex items-center space-x-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Rechercher une entreprise..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                        <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <Button onClick={() => handleOpenModal()}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Ajouter une Entreprise
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -279,12 +302,10 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
                         >
-                            <option value="">Sélectionnez un type</option>
-                            <option value="Boutique">Boutique</option>
-                            <option value="Restaurant">Restaurant</option>
-                            <option value="Services">Services</option>
-                            <option value="Commerce électronique">Commerce électronique</option>
-                            <option value="Autre">Autre</option>
+                            <option value="SHOP">Boutique</option>
+                            <option value="RESTAURANT">Restaurant</option>
+                            <option value="SERVICE">Services</option>
+                            <option value="OTHER">Autre</option>
                         </select>
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">

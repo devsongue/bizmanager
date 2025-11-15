@@ -10,7 +10,7 @@ import { useClients, useCreateClient } from '@/hooks/useClient';
 interface ClientsProps {
     business: Business;
     onAddClient: (newClient: Client) => void;
-    onRecordPayment: (clientId: string, amount: number) => void;
+    onRecordPayment: (clientId: string, amount: number, paymentMethod?: string) => void;
 }
 
 export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecordPayment }) => {
@@ -18,6 +18,7 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState('');
     const [paymentAmount, setPaymentAmount] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('CASH'); // Méthode de paiement par défaut
     const [formData, setFormData] = useState<Omit<Client, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'loyaltyPoints' | 'lastPurchaseDate' | 'notes'>>({ 
         name: '', 
         contact: '',
@@ -75,6 +76,29 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
         setPaymentAmount(Number(e.target.value));
     };
 
+    const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setPaymentMethod(e.target.value);
+    };
+
+    // Fonction pour calculer le solde total des clients
+    const calculateTotalBalance = () => {
+        return clients.reduce((total, client: any) => total + (client.balance || 0), 0);
+    };
+
+    // Fonction pour obtenir la couleur du solde
+    const getBalanceColor = (balance: number) => {
+        if (balance < 0) return 'text-red-600';
+        if (balance > 0) return 'text-green-600';
+        return 'text-gray-600';
+    };
+
+    // Fonction pour formater le solde
+    const formatBalance = (balance: number) => {
+        const absBalance = Math.abs(balance);
+        const sign = balance < 0 ? '-' : '';
+        return `${sign}${absBalance.toLocaleString('fr-FR')} FCFA`;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -101,7 +125,8 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onRecordPayment(selectedClientId, paymentAmount);
+        // Passer la méthode de paiement en plus du montant
+        onRecordPayment(selectedClientId, paymentAmount, paymentMethod);
         handleClosePaymentModal();
     };
 
@@ -112,8 +137,8 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
             header: 'Solde', 
             accessor: 'balance' as keyof Client,
             render: (item: Client) => (
-                <span className={item.balance < 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>
-                    {item.balance < 0 ? '-' : ''}{Math.abs(item.balance).toLocaleString('fr-FR')} FCFA
+                <span className={getBalanceColor(item.balance)}>
+                    {formatBalance(item.balance)}
                 </span>
             )
         },
@@ -132,7 +157,7 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
                 </Button>
             )
         }
-    ], []);
+    ], [clients]);
 
     if (isLoading) {
         return (
@@ -153,9 +178,17 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Clients - {business.name}</h1>
-                <Button onClick={handleOpenModal}>Ajouter un Client</Button>
+                <div className="flex items-center space-x-4">
+                    <div className="bg-white p-3 rounded-lg shadow-md">
+                        <p className="text-sm text-gray-600">Solde total des clients</p>
+                        <p className={`text-xl font-bold ${getBalanceColor(calculateTotalBalance())}`}>
+                            {formatBalance(calculateTotalBalance())}
+                        </p>
+                    </div>
+                    <Button onClick={handleOpenModal}>Ajouter un Client</Button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -258,6 +291,23 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
                         />
+                    </div>
+                    <div>
+                        <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement</label>
+                        <select
+                            id="paymentMethod"
+                            name="paymentMethod"
+                            value={paymentMethod}
+                            onChange={handlePaymentMethodChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            required
+                        >
+                            <option value="CASH">Espèces</option>
+                            <option value="BANK_TRANSFER">Virement bancaire</option>
+                            <option value="CHECK">Chèque</option>
+                            <option value="CREDIT_CARD">Carte de crédit</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                        </select>
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">
                         <Button type="button" variant="secondary" onClick={handleClosePaymentModal}>Annuler</Button>

@@ -192,6 +192,7 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [activeIndex, setActiveIndex] = useState(0);
     const [profitSortKey, setProfitSortKey] = useState<'totalProfit' | 'totalQuantity'>('totalProfit');
+    const [reportView, setReportView] = useState<'summary' | 'details' | 'comparison'>('summary'); // Nouvel état pour la vue des rapports
 
     // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
     const businessData = useMemo(() => ({
@@ -230,6 +231,31 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
         return processMonthlyData(filteredData.sales, filteredData.expenses);
     }, [filteredData.sales, filteredData.expenses]);
 
+    // Calculer les tendances de vente
+    const salesTrends = useMemo(() => {
+        // Regrouper les ventes par mois
+        const monthlySales: { [key: string]: { month: string; totalSales: number; totalRevenue: number } } = {};
+        
+        filteredData.sales.forEach(sale => {
+            const saleDate = new Date(sale.date);
+            const monthKey = `${saleDate.getFullYear()}-${saleDate.getMonth()}`;
+            const monthName = saleDate.toLocaleString('fr-FR', { month: 'short', year: 'numeric' });
+            
+            if (!monthlySales[monthKey]) {
+                monthlySales[monthKey] = {
+                    month: monthName,
+                    totalSales: 0,
+                    totalRevenue: 0
+                };
+            }
+            
+            monthlySales[monthKey].totalSales += 1;
+            monthlySales[monthKey].totalRevenue += sale.total;
+        });
+        
+        return Object.values(monthlySales);
+    }, [filteredData.sales]);
+
     const expenseByCategory = useMemo(() => {
         const categoryMap: { [key: string]: number } = {};
         filteredData.expenses.forEach(expense => {
@@ -248,16 +274,20 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
         const productSales: { [key: string]: { productId: string; productName: string; totalQuantity: number; totalRevenue: number } } = {};
 
         filteredData.sales.forEach(sale => {
-            if (!productSales[sale.productId]) {
-                productSales[sale.productId] = {
-                    productId: sale.productId,
-                    productName: sale.productName,
-                    totalQuantity: 0,
-                    totalRevenue: 0,
-                };
+            // Vérifier que sale.productId n'est pas null ou undefined
+            if (sale.productId && sale.productId !== null) {
+                const productId = sale.productId;
+                if (!productSales[productId]) {
+                    productSales[productId] = {
+                        productId: productId,
+                        productName: sale.productName,
+                        totalQuantity: 0,
+                        totalRevenue: 0,
+                    };
+                }
+                productSales[productId].totalQuantity += sale.quantity;
+                productSales[productId].totalRevenue += sale.total;
             }
-            productSales[sale.productId].totalQuantity += sale.quantity;
-            productSales[sale.productId].totalRevenue += sale.total;
         });
 
         // Convert to array and sort by totalRevenue
@@ -274,27 +304,30 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
         const productCosts: { [key: string]: number } = {};
         
         filteredData.sales.forEach(sale => {
-            const productId = sale.productId;
-            if (!productCosts[productId]) {
-                const product = businessData.products.find(p => p.id === productId);
-                productCosts[productId] = product ? product.wholesalePrice : 0;
+            // Vérifier que sale.productId n'est pas null ou undefined
+            if (sale.productId && sale.productId !== null) {
+                const productId = sale.productId;
+                if (!productCosts[productId]) {
+                    const product = businessData.products.find(p => p.id === productId);
+                    productCosts[productId] = product ? product.wholesalePrice : 0;
+                }
+                
+                const cost = productCosts[productId] * sale.quantity;
+                const revenue = sale.total;
+                const profit = revenue - cost;
+                
+                if (!profitMap[productId]) {
+                    profitMap[productId] = {
+                        productName: sale.productName,
+                        totalProfit: 0,
+                        totalQuantity: 0,
+                        wholesalePrice: productCosts[productId]
+                    };
+                }
+                
+                profitMap[productId].totalProfit += profit;
+                profitMap[productId].totalQuantity += sale.quantity;
             }
-            
-            const cost = productCosts[productId] * sale.quantity;
-            const revenue = sale.total;
-            const profit = revenue - cost;
-            
-            if (!profitMap[productId]) {
-                profitMap[productId] = {
-                    productName: sale.productName,
-                    totalProfit: 0,
-                    totalQuantity: 0,
-                    wholesalePrice: productCosts[productId]
-                };
-            }
-            
-            profitMap[productId].totalProfit += profit;
-            profitMap[productId].totalQuantity += sale.quantity;
         });
 
         // Convertir en tableau et trier
@@ -333,13 +366,35 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
 
     return (
         <div className="space-y-8">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Rapports - {business.name}</h1>
-                {!hideFilters && (
-                    <div className="bg-white p-3 rounded-lg shadow-md">
-                        <DateFilter onDateRangeChange={handleDateRangeChange} />
+                <div className="flex items-center space-x-4">
+                    <div className="flex bg-white rounded-lg shadow-md overflow-hidden">
+                        <button 
+                            className={`px-4 py-2 text-sm font-medium ${reportView === 'summary' ? 'bg-primary-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                            onClick={() => setReportView('summary')}
+                        >
+                            Résumé
+                        </button>
+                        <button 
+                            className={`px-4 py-2 text-sm font-medium ${reportView === 'details' ? 'bg-primary-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                            onClick={() => setReportView('details')}
+                        >
+                            Détails
+                        </button>
+                        <button 
+                            className={`px-4 py-2 text-sm font-medium ${reportView === 'comparison' ? 'bg-primary-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                            onClick={() => setReportView('comparison')}
+                        >
+                            Comparaison
+                        </button>
                     </div>
-                )}
+                    {!hideFilters && (
+                        <div className="bg-white p-3 rounded-lg shadow-md">
+                            <DateFilter onDateRangeChange={handleDateRangeChange} />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Statistiques récapitulatives */}

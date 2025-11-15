@@ -603,7 +603,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                         <div className="flex items-center">
-                                            <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full mr-3" />
+                                            <img src={user?.avatarUrl || ''} alt={user.name} className="w-8 h-8 rounded-full mr-3" />
                                             {user.name}
                                         </div>
                                     </td>

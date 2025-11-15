@@ -225,6 +225,11 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             )
         },
         { 
+            header: 'Prix d\'Achat', 
+            accessor: 'costPrice',
+            render: (item: Product) => `${item.costPrice.toLocaleString('fr-FR')} FCFA`
+        },
+        { 
             header: 'Prix Détail', 
             accessor: 'retailPrice',
             render: (item: Product) => `${item.retailPrice.toLocaleString('fr-FR')} FCFA`

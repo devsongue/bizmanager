@@ -19,10 +19,10 @@ export default function BusinessPage() {
     if (!currentUser || !businessId) return false;
     
     // Admins can access any business
-    if (currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'ADMIN') return true;
     
     // Managers can only access businesses they manage
-    if (currentUser.role === 'Gérant') {
+    if (currentUser.role === 'MANAGER') {
       return currentUser.managedBusinessIds?.includes(businessId) || false;
     }
     
@@ -34,7 +34,7 @@ export default function BusinessPage() {
     if (!isLoading && businesses.length > 0 && !isAuthorized) {
       // Si l'utilisateur est un gérant mais n'a pas accès à cette entreprise,
       // le rediriger vers la première entreprise à laquelle il a accès
-      if (currentUser?.role === 'Gérant' && currentUser.managedBusinessIds && currentUser.managedBusinessIds.length > 0) {
+      if (currentUser?.role === 'MANAGER' && currentUser.managedBusinessIds && currentUser.managedBusinessIds.length > 0) {
         router.push(`/business/${currentUser.managedBusinessIds[0]}`);
       } else {
         // Pour les autres cas, rediriger vers le tableau de bord

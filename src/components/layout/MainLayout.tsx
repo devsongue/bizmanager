@@ -21,28 +21,50 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const router = useRouter();
   const [activeBusinessId, setActiveBusinessId] = useState<string>('');
   
-  // Initialize activeBusinessId properly
+  // Initialize activeBusinessId properly and persist in localStorage
   useEffect(() => {
-    if (businesses.length > 0 && !activeBusinessId) {
-      // For admins, default to first business
-      if (currentUser?.role === 'ADMIN') {
-        setActiveBusinessId(businesses[0].id);
-      } 
-      // For managers, default to first business they manage
-      else if (currentUser?.role === 'MANAGER' && currentUser.managedBusinessIds?.length) {
-        // Find first managed business in the businesses list
-        const firstManagedBusiness = businesses.find(b => 
-          currentUser.managedBusinessIds?.includes(b.id)
-        );
-        if (firstManagedBusiness) {
-          setActiveBusinessId(firstManagedBusiness.id);
-        } else {
-          // Fallback to first business if no managed business found
+    if (businesses.length > 0) {
+      // Check if there's a saved business ID in localStorage
+      const savedBusinessId = localStorage.getItem('activeBusinessId');
+      
+      if (savedBusinessId) {
+        // Verify that the saved business ID is valid for the current user
+        const isValidBusiness = businesses.some(b => b.id === savedBusinessId);
+        if (isValidBusiness) {
+          setActiveBusinessId(savedBusinessId);
+          return;
+        }
+      }
+      
+      // If no saved ID or invalid, set default based on user role
+      if (!activeBusinessId) {
+        // For admins, default to first business
+        if (currentUser?.role === 'ADMIN') {
           setActiveBusinessId(businesses[0].id);
+        } 
+        // For managers, default to first business they manage
+        else if (currentUser?.role === 'MANAGER' && currentUser.managedBusinessIds?.length) {
+          // Find first managed business in the businesses list
+          const firstManagedBusiness = businesses.find(b => 
+            currentUser.managedBusinessIds?.includes(b.id)
+          );
+          if (firstManagedBusiness) {
+            setActiveBusinessId(firstManagedBusiness.id);
+          } else {
+            // Fallback to first business if no managed business found
+            setActiveBusinessId(businesses[0].id);
+          }
         }
       }
     }
-  }, [businesses, currentUser, activeBusinessId]);
+  }, [businesses, currentUser]); // Removed activeBusinessId from dependencies to prevent infinite loop
+
+  // Persist active business ID in localStorage whenever it changes
+  useEffect(() => {
+    if (activeBusinessId) {
+      localStorage.setItem('activeBusinessId', activeBusinessId);
+    }
+  }, [activeBusinessId]); // This effect should only run when activeBusinessId changes
 
   const activeBusiness = useMemo(() => {
     if (!currentUser || businesses.length === 0 || !activeBusinessId) return null;
@@ -84,6 +106,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const handleLogout = () => {
     // Call the logout function from AuthContext
     logout();
+    // Clear the active business ID from localStorage
+    localStorage.removeItem('activeBusinessId');
     // Redirect to login page
     router.push('/login');
   };
@@ -94,32 +118,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return null; // Retourne null pendant la redirection
   }
 
-  // Create a wrapper component that passes the business prop
-  const renderChildrenWithBusiness = () => {
-    return React.Children.map(children, child => {
-      if (React.isValidElement(child)) {
-        // @ts-ignore - We know that the child is a ReactElement
-        return React.cloneElement(child, { activeBusiness });
-      }
-      return child;
-    });
-  };
-
   return (
     <ActiveBusinessProvider activeBusiness={activeBusiness} setActiveBusinessId={setActiveBusinessId}>
-      <Sidebar currentUser={currentUser} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          currentUser={currentUser as any} 
-          businesses={managedBusinesses}
-          activeBusiness={activeBusiness}
-          setActiveBusinessId={setActiveBusinessId}
-          onLogout={handleLogout}
-          lowStockProducts={lowStockProducts}
-        />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
-          {renderChildrenWithBusiness()}
-        </main>
+      <div className="flex h-screen w-full bg-gray-50 text-gray-800">
+        <Sidebar currentUser={currentUser} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header 
+            currentUser={currentUser as any} 
+            businesses={managedBusinesses}
+            activeBusiness={activeBusiness}
+            setActiveBusinessId={setActiveBusinessId}
+            onLogout={handleLogout}
+            lowStockProducts={lowStockProducts}
+          />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
+            {children}
+          </main>
+        </div>
       </div>
     </ActiveBusinessProvider>
   );

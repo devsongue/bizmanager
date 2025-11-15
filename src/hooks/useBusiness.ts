@@ -14,6 +14,8 @@ export const useBusinesses = () => {
     queryKey: ['businesses'],
     queryFn: getBusinesses,
     select: (data) => data.success ? data.data : [],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 };
 
@@ -24,6 +26,8 @@ export const useBusiness = (id: string) => {
     queryFn: () => getBusinessById(id),
     select: (data) => data.success ? data.data : null,
     enabled: !!id, // Only run the query if id is truthy
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 };
 
@@ -46,8 +50,11 @@ export const useUpdateBusiness = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Business> }) => 
       updateBusiness(id, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['businesses'] });
+      if (data.success && data.data) {
+        queryClient.invalidateQueries({ queryKey: ['business', data.data.id] });
+      }
     },
   });
 };

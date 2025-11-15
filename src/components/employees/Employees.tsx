@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { User, Business } from '@/types';
+import type { User, Business, UserRole } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { Table } from '../shared/Table';
 import { useUsers, useCreateUser, useUpdateUser } from '@/hooks/useUser';
+import { Pen, PenBox, TrashIcon } from 'lucide-react';
 
 interface EmployeesProps {
     users: User[];
@@ -19,7 +20,7 @@ interface UserFormData {
     name: string;
     email: string;
     password: string;
-    role: string;
+    role: UserRole;
     avatarUrl: string;
     managedBusinessIds: string[];
 }
@@ -31,7 +32,7 @@ export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) =>
         name: '', 
         email: '', 
         password: '', 
-        role: 'Gérant', 
+        role: 'MANAGER', 
         avatarUrl: '', 
         managedBusinessIds: [] 
     });
@@ -57,7 +58,7 @@ export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) =>
                 name: '', 
                 email: '', 
                 password: '', 
-                role: 'Gérant', 
+                role: 'MANAGER', 
                 avatarUrl: '', 
                 managedBusinessIds: [] 
             });
@@ -79,11 +80,11 @@ export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) =>
     };
 
     const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const role = e.target.value as 'Admin' | 'Gérant';
+        const role = e.target.value as UserRole;
         setFormData(prev => ({
             ...prev,
             role,
-            managedBusinessIds: role === 'Admin' ? [] : prev.managedBusinessIds
+            managedBusinessIds: role === 'ADMIN' ? [] : prev.managedBusinessIds
         }));
     };
 
@@ -116,9 +117,40 @@ export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) =>
     const columns = [
         { header: 'Nom', accessor: 'name' as keyof User },
         { header: 'Email', accessor: 'email' as keyof User },
-        { header: 'Entreprises Gérées', accessor: 'managedBusinessIds' as keyof User },
-        { header: 'Rôle', accessor: 'role' as keyof User },
-       
+        { 
+            header: 'Entreprises Gérées', 
+            accessor: 'managedBusinessIds' as keyof User,
+            render: (item: User) => {
+                if (item.role === 'ADMIN') {
+                    return <span className="text-gray-500">Toutes les entreprises</span>;
+                }
+                
+                const businessCount = item.managedBusinessIds?.length || 0;
+                return <span>{businessCount} entreprise{businessCount > 1 ? 's' : ''}</span>;
+            }
+        },
+      
+        { 
+            header: 'Rôle', 
+            accessor: 'role' as keyof User,
+            render: (item: User) => {
+                return item.role === 'ADMIN' ? 'Administrateur' : 'Gérant';
+            }
+        },
+          {
+            header: 'Actions',
+            accessor: 'id',
+            render: (item: User) => (
+                <div className="flex gap-2">
+                    <button onClick={() => handleOpenModal(item)} className="text-blue-500 hover:underline p-2 hover:bg-blue-200 rounded">
+                        <PenBox className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleOpenModal(item)} className="text-red-500 hover:underline p-2 hover:bg-red-200 rounded">
+                        <TrashIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        }
     ];
 
     if (isLoading) {
@@ -205,11 +237,11 @@ export const Employees: React.FC<EmployeesProps> = ({ users, allBusinesses }) =>
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
                         >
-                            <option value="Gérant">Gérant</option>
-                            <option value="Admin">Admin</option>
+                            <option value="MANAGER">Gérant</option>
+                            <option value="ADMIN">Administrateur</option>
                         </select>
                     </div>
-                    {formData.role === 'Gérant' && (
+                    {formData.role === 'MANAGER' && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Entreprises à gérer</label>
                             <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-md">
