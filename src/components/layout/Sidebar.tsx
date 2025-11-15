@@ -36,22 +36,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
     return (
         <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 shadow-lg">
-            <div className="flex items-center justify-center h-20 shadow-md dark:shadow-gray-900">
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10m16-10v10M4 7h16M4 17h16M9 7v10m6-10v10" />
-                </svg>
-                <h1 className="text-xl font-bold ml-2 text-gray-800 dark:text-white">BizSuite</h1>
+            <div className="flex items-center flex-col justify-center h-20 shadow-md dark:shadow-gray-900">
+                <img src="/logo.png" alt="" className='h-10 w-10 text-primary-600' />
+                <h1 className="text-sm font-bold text-gray-600 dark:text-white">DevSongue suite</h1>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2">
-                {(currentUser.role === 'Admin' ? adminNavItems : navItems).map((item: any) => {
+                {(currentUser.role === 'ADMIN' ? adminNavItems : navItems).map((item: any) => {
                     // Show admin-only items only to admins
-                    if (item.adminOnly && currentUser.role !== 'Admin') return null;
+                    if (item.adminOnly && currentUser.role !== 'ADMIN') return null;
 
                     const isActive = pathname === item.path;
                     const linkClasses = `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 
                         ${isActive 
-                            ? 'bg-primary-500 text-white shadow-md' 
-                            : 'hover:bg-primary-100 dark:hover:bg-gray-700 hover:text-primary-600 dark:hover:text-white'
+                            ? 'bg-orange-500 text-white shadow-md' 
+                            : 'hover:bg-orange-100 dark:hover:bg-gray-700 hover:text-orange-600 dark:hover:text-white'
                         }`;
                     
                     return (

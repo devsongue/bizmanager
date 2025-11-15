@@ -24,9 +24,9 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
-    const [formData, setFormData] = useState<Omit<Business, 'id' | 'sales' | 'expenses' | 'products' | 'clients' | 'suppliers'>>({ 
-        name: '', 
-        type: '' 
+    const [formData, setFormData] = useState<Omit<Business, 'id' | 'sales' | 'expenses' | 'products' | 'clients' | 'suppliers'>>({
+        name: '',
+        type: ''
     });
 
     const { data: fetchedBusinesses = [], isLoading } = useBusinesses();
@@ -66,19 +66,19 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         try {
             if (isEditing && currentBusiness) {
                 // Update existing business
-                await updateBusinessMutation.mutateAsync({ 
-                    id: currentBusiness.id, 
-                    data: formData 
+                await updateBusinessMutation.mutateAsync({
+                    id: currentBusiness.id,
+                    data: formData
                 });
             } else {
                 // Create new business
                 await createBusinessMutation.mutateAsync(formData);
             }
-            
+
             handleCloseModal();
         } catch (error) {
             console.error('Error saving business:', error);
@@ -90,7 +90,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
             alert("Vous ne pouvez pas supprimer la dernière entreprise.");
             return;
         }
-        
+
         if (confirm("Êtes-vous sûr de vouloir supprimer cette entreprise ?")) {
             try {
                 await deleteBusinessMutation.mutateAsync(businessId);
@@ -126,10 +126,10 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                 const totalCOGS = calculateCOGS(item.sales || [], item.products || []);
                 const totalOperationalExpenses = calculateOperationalExpenses(item.expenses || []);
                 const netProfit = totalSales - totalCOGS - totalOperationalExpenses;
-                
+
                 return (
                     <div className="flex flex-wrap gap-2 text-sm">
-                        <div className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                        <div className="bg-orange-100 dark:bg-orange-900 px-2 py-1 rounded">
                             <span className="font-medium">Ventes:</span> {item.sales?.length || 0}
                         </div>
                         <div className="bg-red-100 dark:bg-red-900 px-2 py-1 rounded">
@@ -150,8 +150,8 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
             accessor: 'id' as keyof Business,
             render: (item: Business) => (
                 <div className="flex flex-wrap gap-2">
-                    <Button 
-                        variant="secondary" 
+                    <Button
+                        variant="secondary"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleOpenModal(item);
@@ -160,7 +160,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                     >
                         <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
+                    <Button
                         variant="primary"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -171,8 +171,8 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                     >
                         <Eye className="h-4 w-4" />
                     </Button>
-                    <Button 
-                        variant="danger" 
+                    <Button
+                        variant="danger"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(item.id);
@@ -188,7 +188,20 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
     ];
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des entreprises...</div>;
+        return (
+            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+                <div className="flex items-center space-x-4 p-6">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="font-semibold text-gray-800">Settings</p>
+                        <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     // Use fetched businesses if available, otherwise use the prop businesses
@@ -213,9 +226,9 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                    <Table 
-                        columns={columns} 
-                        data={displayedBusinesses} 
+                    <Table
+                        columns={columns}
+                        data={displayedBusinesses}
                     />
                 </div>
             </div>
@@ -235,7 +248,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">Total des Produits</h3>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                             {displayedBusinesses.reduce((sum, business) => sum + (business.products?.length || 0), 0)}
                         </p>
                     </div>
@@ -276,12 +289,12 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">
                         <Button type="button" variant="secondary" onClick={handleCloseModal}>Annuler</Button>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             disabled={createBusinessMutation.isPending || updateBusinessMutation.isPending}
                         >
-                            {createBusinessMutation.isPending || updateBusinessMutation.isPending ? 'Enregistrement...' : 
-                             isEditing ? 'Mettre à Jour' : 'Ajouter'}
+                            {createBusinessMutation.isPending || updateBusinessMutation.isPending ? 'Enregistrement...' :
+                                isEditing ? 'Mettre à Jour' : 'Ajouter'}
                         </Button>
                     </div>
                 </form>

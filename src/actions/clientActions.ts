@@ -18,21 +18,19 @@ export async function getClients(businessId: string) {
 }
 
 // Create a new client
-export async function createClient(businessId: string, clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createClient(businessId: string, clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>) {
   try {
     const client = await prisma.client.create({
       data: {
         id: `client-${Date.now()}`,
         name: clientData.name,
         contact: clientData.contact,
-        telephone: clientData.telephone,  // Ajout du champ
+        telephone: clientData.telephone,
         balance: clientData.balance,
         email: clientData.email,
         address: clientData.address,
         company: clientData.company,
-        business: {
-          connect: { id: businessId },
-        },
+        businessId: businessId,
       },
     });
     
@@ -44,7 +42,7 @@ export async function createClient(businessId: string, clientData: Omit<Client, 
 }
 
 // Update a client
-export async function updateClient(id: string, clientData: Partial<Client>) {
+export async function updateClient(id: string, clientData: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>) {
   try {
     const client = await prisma.client.update({
       where: { id },

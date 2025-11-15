@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Business, Sale, Product, Client } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -34,13 +34,13 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         date: string;
         clientId: string;
         clientName: string;
-        saleType: 'Vente au détail' | 'Vente en gros';
+        saleType: 'RETAIL' | 'WHOLESALE';
         lineItems: SaleLineItem[];
     }>({ 
         date: new Date().toISOString().split('T')[0], 
         clientId: '', 
         clientName: '', 
-        saleType: 'Vente au détail',
+        saleType: 'RETAIL',
         lineItems: [{
             id: Date.now().toString(),
             productId: '',
@@ -50,24 +50,32 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         }]
     });
 
-    const { data: sales = [], isLoading: salesLoading } = useSales(business.id);
-    const { data: products = [], isLoading: productsLoading } = useProducts(business.id);
-    const { data: clients = [], isLoading: clientsLoading } = useClients(business.id);
+    // État pour gérer l'affichage des détails de la vente
+    const [showSaleDetails, setShowSaleDetails] = useState(false);
+
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessId = useMemo(() => business.id, [business.id]);
+    
+    const { data: sales = [], isLoading: salesLoading } = useSales(businessId);
+    const { data: products = [], isLoading: productsLoading } = useProducts(businessId);
+    const { data: clients = [], isLoading: clientsLoading } = useClients(businessId);
     const createSaleMutation = useCreateSale();
 
     // Convert database sale objects to Sale type
-    const formattedSales: Sale[] = sales.map((sale: any) => ({
-        ...sale,
-        date: typeof sale.date === 'string' ? sale.date : sale.date.toISOString().split('T')[0],
-        saleType: sale.saleType as 'Vente au détail' | 'Vente en gros'
-    }));
+    const formattedSales: Sale[] = useMemo(() => {
+        return sales.map((sale: any) => ({
+            ...sale,
+            date: typeof sale.date === 'string' ? sale.date : sale.date.toISOString().split('T')[0],
+            saleType: sale.saleType as 'RETAIL' | 'WHOLESALE'
+        }));
+    }, [sales]);
 
     const handleOpenModal = () => {
         setFormData({ 
             date: new Date().toISOString().split('T')[0], 
             clientId: '', 
             clientName: '', 
-            saleType: 'Vente au détail',
+            saleType: "RETAIL",
             lineItems: [{
                 id: Date.now().toString(),
                 productId: '',
@@ -93,7 +101,7 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
 
     const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const clientId = e.target.value;
-        const client = clients.find((c: Client) => c.id === clientId);
+        const client = clients.find((c: any) => c.id === clientId);
         if (client) {
             setFormData(prev => ({
                 ...prev,
@@ -104,7 +112,7 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
     };
 
     const handleSaleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const saleType = e.target.value as 'Vente au détail' | 'Vente en gros';
+        const saleType = e.target.value as 'RETAIL' | 'WHOLESALE';
         setFormData(prev => ({
             ...prev,
             saleType
@@ -147,21 +155,62 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
     };
 
     const handleProductChange = (lineItemId: string, productId: string) => {
-        const product = products.find((p: Product) => p.id === productId);
+        const product = products.find((p: any) => p.id === productId);
         if (product) {
             updateLineItem(lineItemId, 'productId', productId);
             updateLineItem(lineItemId, 'productName', product.name);
             updateLineItem(lineItemId, 'unitPrice', 
-                formData.saleType === 'Vente en gros' ? product.wholesalePrice : product.retailPrice
+                formData.saleType === 'WHOLESALE' ? product.wholesalePrice : product.retailPrice
             );
+            
+            // Mettre à jour automatiquement la quantité si le stock est inférieur à 1
+            if (product.stock < 1) {
+                updateLineItem(lineItemId, 'quantity', 0);
+            }
         }
+    };
+
+    // Fonction pour calculer le total d'une ligne de vente
+    const calculateLineTotal = (quantity: number, unitPrice: number) => {
+        return quantity * unitPrice;
+    };
+
+    // Fonction pour calculer le total de la vente
+    const calculateSaleTotal = () => {
+        return formData.lineItems.reduce((total, item) => {
+            return total + calculateLineTotal(item.quantity, item.unitPrice);
+        }, 0);
+    };
+
+    // Fonction pour vérifier la disponibilité du stock
+    const checkStockAvailability = (productId: string, quantity: number) => {
+        const product = products.find((p: any) => p.id === productId);
+        if (product) {
+            return product.stock >= quantity;
+        }
+        return false;
+    };
+
+    // Fonction pour obtenir la couleur en fonction de la disponibilité du stock
+    const getStockColor = (productId: string, quantity: number) => {
+        const product = products.find((p: any) => p.id === productId);
+        if (product) {
+            if (product.stock >= quantity) {
+                return 'text-green-600';
+            } else if (product.stock > 0) {
+                return 'text-yellow-600';
+            } else {
+                return 'text-red-600';
+            }
+        }
+        return '';
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         // Validate form based on sale type
-        if (formData.saleType === 'Vente en gros' && !formData.clientId) {
+        if (formData.saleType === 'WHOLESALE' && !formData.clientId) {
             alert('Veuillez sélectionner un client pour les ventes en gros');
             return;
         }
@@ -172,22 +221,44 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
                 alert('Veuillez remplir tous les champs des produits');
                 return;
             }
+            
+            // Vérifier la disponibilité du stock
+            if (!checkStockAvailability(item.productId, item.quantity)) {
+                const product = products.find((p: any) => p.id === item.productId);
+                if (product) {
+                    alert(`Stock insuffisant pour le produit ${product.name}. Stock disponible : ${product.stock}`);
+                    return;
+                }
+            }
         }
         
         // Create separate sales for each line item
         for (const item of formData.lineItems) {
             const total = item.quantity * item.unitPrice;
             
-            const saleData = { 
+            // Calculer le profit (exemple simple)
+            const profit = total - (item.unitPrice * 0.8 * item.quantity); // 20% de marge
+            
+            const saleData: any = { 
                 date: formData.date,
-                clientId: formData.saleType === 'Vente au détail' && !formData.clientId ? '' : formData.clientId,
-                clientName: formData.saleType === 'Vente au détail' && !formData.clientId ? 'Client Comptoir' : formData.clientName,
+                clientId: formData.saleType === 'RETAIL' && !formData.clientId ? '' : formData.clientId,
+                clientName: formData.saleType === 'RETAIL' && !formData.clientId ? 'Client Comptoir' : formData.clientName,
                 productId: item.productId,
                 productName: item.productName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
+                discount: 0,
+                tax: 0,
                 total,
-                saleType: formData.saleType
+                profit,
+                saleType: formData.saleType,
+                paymentStatus: 'PAID',
+                paymentMethod: 'CASH',
+                userId: undefined,
+                businessId: business.id,
+                reference: `REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
             
             await createSaleMutation.mutateAsync({ 
@@ -215,17 +286,19 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
     };
     
     // Regrouper les ventes par date et client pour créer des reçus
-    const groupedSales = formattedSales.reduce((acc: Record<string, Sale[]>, sale) => {
-        const key = `${sale.date}-${sale.clientId}`;
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-        acc[key].push(sale);
-        return acc;
-    }, {});
+    const groupedSales = useMemo(() => {
+        return formattedSales.reduce((acc: Record<string, Sale[]>, sale) => {
+            const key = `${sale.date}-${sale.clientId}`;
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(sale);
+            return acc;
+        }, {});
+    }, [formattedSales]);
     
     // Fonction pour filtrer les ventes par date
-    const filteredSales = React.useMemo(() => {
+    const filteredSales = useMemo(() => {
         if (!startDate && !endDate) return formattedSales;
         
         return formattedSales.filter(sale => {
@@ -240,40 +313,32 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
     }, [formattedSales, startDate, endDate]);
     
     // Fonction de tri appliquée aux ventes filtrées
-    const sortedAndFilteredSales = React.useMemo(() => {
+    const sortedAndFilteredSales = useMemo(() => {
         if (!sortConfig) return filteredSales;
         
         return [...filteredSales].sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
+            if (!sortConfig) return 0;
+            
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+            
+            // Gérer les valeurs null ou undefined
+            if (aValue == null && bValue == null) return 0;
+            if (aValue == null) return sortConfig.direction === 'asc' ? 1 : -1;
+            if (bValue == null) return sortConfig.direction === 'asc' ? -1 : 1;
+            
+            if (aValue < bValue) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
             }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
+            if (aValue > bValue) {
                 return sortConfig.direction === 'asc' ? 1 : -1;
             }
             return 0;
         });
     }, [filteredSales, sortConfig]);
     
-    // Fonction pour gérer le tri
-    const handleSort = (key: keyof Sale) => {
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-        }
-        setSortConfig({ key, direction });
-    };
-    
-    // Fonction pour obtenir l'icône de tri
-    const getSortIcon = (key: keyof Sale) => {
-        if (!sortConfig || sortConfig.key !== key) {
-            return <ChevronUp className="h-4 w-4 text-gray-400" />;
-        }
-        return sortConfig.direction === 'asc' ? 
-            <ChevronUp className="h-4 w-4 text-gray-900 dark:text-white" /> : 
-            <ChevronDown className="h-4 w-4 text-gray-900 dark:text-white" />;
-    };
-    
-    const columns = [
+    // Colonnes du tableau
+    const columns = useMemo(() => [
         { 
             header: 'Date', 
             accessor: 'date' as keyof Sale,
@@ -292,19 +357,24 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         { 
             header: 'Quantité', 
             accessor: 'quantity' as keyof Sale,
-            sortable: true
+            sortable: true,
+            render: (item: Sale) => (
+                <span className={getStockColor(item.productId || '', item.quantity)}>
+                    {item.quantity}
+                </span>
+            )
         },
         { 
             header: 'Prix Unitaire', 
             accessor: 'unitPrice' as keyof Sale,
-            render: (item: Sale) => `${item.unitPrice.toLocaleString('fr-FR')} FCFA`,
-            sortable: true
+            sortable: true,
+            render: (item: Sale) => `${item.unitPrice.toLocaleString('fr-FR')} FCFA`
         },
         { 
             header: 'Total', 
             accessor: 'total' as keyof Sale,
-            render: (item: Sale) => `${item.total.toLocaleString('fr-FR')} FCFA`,
-            sortable: true
+            sortable: true,
+            render: (item: Sale) => `${item.total.toLocaleString('fr-FR')} FCFA`
         },
         { 
             header: 'Type', 
@@ -317,151 +387,58 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
             render: (item: Sale) => (
                 <div className="flex space-x-2">
                     <Button 
-                        variant="secondary" 
-                        onClick={() => {
-                            // Trouver toutes les ventes du même reçu (même date et client)
-                            const receiptKey = `${item.date}-${item.clientId}`;
-                            const receiptSales = groupedSales[receiptKey] || [item];
-                            
-                            // Trouver le client correspondant
-                            const client = clients.find(c => c.id === item.clientId) || null;
-                            
-                            // Trouver tous les produits correspondants
-                            const receiptProducts = products.filter(p => 
-                                receiptSales.some(s => s.productId === p.id)
-                            );
-                            
-                            // Créer un élément temporaire pour le reçu
-                            const printWindow = window.open('', '_blank');
-                            if (printWindow) {
-                                printWindow.document.write(`
-                                    <!DOCTYPE html>
-                                    <html>
-                                    <head>
-                                        <title>Reçu de vente</title>
-                                        <style>
-                                            body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
-                                            .header { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
-                                            .business-name { font-size: 24px; font-weight: bold; }
-                                            .receipt-title { font-size: 18px; color: #666; }
-                                            .date { font-size: 14px; color: #999; margin: 5px 0; }
-                                            .client-info { margin-bottom: 20px; }
-                                            .client-name { font-weight: bold; }
-                                            .products-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                                            .products-table th, .products-table td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
-                                            .products-table th { border-bottom: 2px solid #ccc; }
-                                            .total-section { border-top: 2px solid #ccc; padding-top: 10px; }
-                                            .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
-                                            .footer { text-align: center; margin-top: 30px; font-size: 14px; color: #999; }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="header">
-                                            <div class="business-name">${business.name}</div>
-                                            <div class="receipt-title">Reçu de vente</div>
-                                            <div class="date">Date: ${new Date().toLocaleDateString('fr-FR')}</div>
-                                        </div>
-                                        
-                                        ${client ? `
-                                        <div class="client-info">
-                                            <div class="client-name">Client: ${client.name}</div>
-                                            ${client.telephone ? `<div>Tél: ${client.telephone}</div>` : ''}
-                                            ${client.address ? `<div>Adresse: ${client.address}</div>` : ''}
-                                        </div>
-                                        ` : ''}
-                                        
-                                        <table class="products-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Produit</th>
-                                                    <th>Qté</th>
-                                                    <th>Prix</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${receiptSales.map(sale => {
-                                                    const product = receiptProducts.find(p => p.id === sale.productId);
-                                                    return `
-                                                    <tr>
-                                                        <td>${sale.productName}</td>
-                                                        <td>${sale.quantity}</td>
-                                                        <td>${sale.unitPrice.toLocaleString('fr-FR')} FCFA</td>
-                                                        <td>${sale.total.toLocaleString('fr-FR')} FCFA</td>
-                                                    </tr>
-                                                    `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                        
-                                        <div class="total-section">
-                                            <div class="total-row">
-                                                <span>Total:</span>
-                                                <span>${receiptSales.reduce((sum, sale) => sum + sale.total, 0).toLocaleString('fr-FR')} FCFA</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="footer">
-                                            <p>Merci pour votre achat!</p>
-                                            <p>-----------------------------</p>
-                                        </div>
-                                        
-                                        <script>
-                                            window.onload = function() {
-                                                window.print();
-                                                // Fermer la fenêtre après l'impression
-                                                window.onfocus = function() { 
-                                                    window.close(); 
-                                                }
-                                            }
-                                        </script>
-                                    </body>
-                                    </html>
-                                `);
-                                printWindow.document.close();
-                            }
-                        }}
-                        className="p-2"
+                        variant="secondary"
+                        onClick={() => handlePrintReceipt(item.id)}
+                        icon={<Printer size={16} />}
                     >
-                        <Printer className="h-4 w-4" />
+                        Imprimer
                     </Button>
                 </div>
             )
         }
-    ];
-
+    ], [products]);
+    
+    // Fonction pour gérer le tri
+    const handleSort = (key: keyof Sale) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+    
     if (salesLoading || productsLoading || clientsLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des ventes...</div>;
+        return <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4"><div className="flex items-center space-x-4 p-6"><div className="relative"><div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div></div><div className="space-y-2"><p className="font-semibold text-gray-800">Ventes</p><p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p></div></div></div>;
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Ventes</h1>
-                <Button onClick={handleOpenModal}>Ajouter une Vente</Button>
+                <h1 className="text-3xl font-bold text-gray-800">Ventes - {business.name}</h1>
+                <Button onClick={handleOpenModal} icon={<Plus size={16} />}>Ajouter une Vente</Button>
             </div>
             
-            {/* Filtres par date */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
+            {/* Filtres de date */}
+            <div className="bg-white p-4 rounded-lg shadow-md">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de début</label>
+                        <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
                         <input
                             type="date"
                             id="startDate"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                     </div>
                     <div>
-                        <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de fin</label>
+                        <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
                         <input
                             type="date"
                             id="endDate"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                     </div>
                     <div className="flex items-end">
@@ -470,195 +447,164 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
                             onClick={() => {
                                 setStartDate('');
                                 setEndDate('');
+                                setSortConfig(null);
                             }}
-                            className="w-full"
                         >
                             Réinitialiser les filtres
                         </Button>
                     </div>
                 </div>
             </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <Table 
-                    columns={columns} 
-                    data={sortedAndFilteredSales} 
-                    onSort={handleSort}
-                    sortConfig={sortConfig}
-                />
-            </div>
-
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Ajouter une Vente">
+            
+            <Table 
+                columns={columns} 
+                data={sortedAndFilteredSales} 
+                onSort={handleSort}
+                sortConfig={sortConfig}
+            />
+            
+            <Modal 
+                isOpen={isModalOpen} 
+                onClose={handleCloseModal} 
+                title="Ajouter une Vente"
+            >
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Section Informations de base */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Informations de la transaction</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input
+                                type="date"
+                                id="date"
+                                name="date"
+                                value={formData.date}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                            />
+                        </div>
+                        
+                        <div>
+                            <label htmlFor="saleType" className="block text-sm font-medium text-gray-700 mb-1">Type de Vente</label>
+                            <select
+                                id="saleType"
+                                name="saleType"
+                                value={formData.saleType}
+                                onChange={handleSaleTypeChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                            >
+                                <option value="RETAIL">Vente au détail</option>
+                                <option value="WHOLESALE">Vente en gros</option>
+                            </select>
+                        </div>
+                        
+                        {(formData.saleType === 'WHOLESALE' || formData.clientId) && (
                             <div>
-                                <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                                <input
-                                    type="date"
-                                    id="date"
-                                    name="date"
-                                    value={formData.date}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="saleType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type de Vente</label>
-                                <select
-                                    id="saleType"
-                                    name="saleType"
-                                    value={formData.saleType}
-                                    onChange={handleSaleTypeChange}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    required
-                                >
-                                    <option value="Vente au détail">Vente au détail</option>
-                                    <option value="Vente en gros">Vente en gros</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Client {formData.saleType === 'Vente en gros' && <span className="text-red-500">*</span>}
+                                <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {formData.saleType === 'WHOLESALE' ? 'Client *' : 'Client (optionnel)'}
                                 </label>
                                 <select
                                     id="clientId"
                                     name="clientId"
                                     value={formData.clientId}
                                     onChange={handleClientChange}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    required={formData.saleType === 'Vente en gros'}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    required={formData.saleType === 'WHOLESALE'}
                                 >
-                                    <option value="">
-                                        {formData.saleType === 'Vente en gros' 
-                                            ? 'Sélectionner un client (requis)' 
-                                            : 'Sélectionner un client (optionnel)'}
-                                    </option>
-                                    {clients.map((client: Client) => (
+                                    <option value="">Sélectionner un client</option>
+                                    {clients.map((client: any) => (
                                         <option key={client.id} value={client.id}>{client.name}</option>
                                     ))}
                                 </select>
-                                {formData.saleType === 'Vente au détail' && (
-                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Optionnel pour les ventes au détail</p>
-                                )}
                             </div>
-                        </div>
+                        )}
                     </div>
-
-                    {/* Section Produits */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Produits</h2>
-                            <Button 
-                                type="button" 
-                                variant="secondary" 
-                                onClick={addLineItem} 
-                                className="flex items-center text-sm"
-                            >
-                                <Plus className="h-4 w-4 mr-1" />
+                    
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-semibold">Produits</h3>
+                            <Button type="button" onClick={addLineItem} variant="secondary" icon={<Plus size={16} />}>
                                 Ajouter un produit
                             </Button>
                         </div>
                         
                         <div className="space-y-4">
                             {formData.lineItems.map((item, index) => (
-                                <div key={item.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 relative">
-                                    {formData.lineItems.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeLineItem(item.id)}
-                                            className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900"
-                                            aria-label="Supprimer ce produit"
+                                <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border border-gray-200 rounded-lg">
+                                    <div className="md:col-span-5">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Produit</label>
+                                        <select
+                                            value={item.productId}
+                                            onChange={(e) => handleProductChange(item.id, e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            required
                                         >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Produit</label>
-                                            <select
-                                                value={item.productId}
-                                                onChange={(e) => handleProductChange(item.id, e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                required
-                                            >
-                                                <option value="">Sélectionner un produit</option>
-                                                {products.map((product: Product) => (
-                                                    <option key={product.id} value={product.id}>{product.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantité</label>
-                                            <input
-                                                type="number"
-                                                value={item.quantity}
-                                                onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                                                min="1"
-                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix Unitaire (FCFA)</label>
-                                            <input
-                                                type="number"
-                                                value={item.unitPrice}
-                                                onChange={(e) => updateLineItem(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
-                                                min="0"
-                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                required
-                                            />
-                                        </div>
+                                            <option value="">Sélectionner un produit</option>
+                                            {products.map((product: any) => (
+                                                <option key={product.id} value={product.id}>
+                                                    {product.name} - {product.retailPrice.toLocaleString('fr-FR')} FCFA (détail) / {product.wholesalePrice.toLocaleString('fr-FR')} FCFA (gros)
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">Total pour ce produit:</span>
-                                        <span className="font-semibold text-gray-800 dark:text-white">
-                                            {(item.quantity * item.unitPrice).toLocaleString('fr-FR')} FCFA
-                                        </span>
+                                    
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Quantité</label>
+                                        <input
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${getStockColor(item.productId, item.quantity) === 'text-red-600' ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                                            min="1"
+                                            required
+                                        />
+                                        {item.productId && (
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Stock disponible: {products.find(p => p.id === item.productId)?.stock || 0}
+                                            </p>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="md:col-span-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Prix Unitaire (FCFA)</label>
+                                        <input
+                                            type="number"
+                                            value={item.unitPrice}
+                                            onChange={(e) => updateLineItem(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            min="0"
+                                            required
+                                        />
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            Total ligne: {calculateLineTotal(item.quantity, item.unitPrice).toLocaleString('fr-FR')} FCFA
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="md:col-span-2 flex items-end">
+                                        <Button 
+                                            type="button"
+                                            variant="danger"
+                                            onClick={() => removeLineItem(item.id)}
+                                            disabled={formData.lineItems.length <= 1}
+                                            icon={<Trash2 size={16} />}
+                                        >
+                                            Supprimer
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
-
-                    {/* Section Récapitulatif */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Récapitulatif</h2>
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-700 dark:text-gray-300">Nombre de produits:</span>
-                            <span className="font-medium">{formData.lineItems.length}</span>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                            <span className="text-gray-700 dark:text-gray-300">Total de la transaction:</span>
-                            <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
-                                {formData.lineItems.reduce((total, item) => total + (item.quantity * item.unitPrice), 0).toLocaleString('fr-FR')} FCFA
-                            </span>
-                        </div>
-                    </div>
                     
-                    <div className="flex justify-end space-x-3 pt-4">
-                        <Button type="button" variant="secondary" onClick={handleCloseModal}>Annuler</Button>
-                        <Button 
-                            type="submit" 
-                            disabled={createSaleMutation.isPending}
-                            className="flex items-center"
-                        >
-                            {createSaleMutation.isPending ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Enregistrement...
-                                </>
-                            ) : (
-                                'Enregistrer la vente'
-                            )}
-                        </Button>
+                    <div className="border-t border-gray-200 pt-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold">Total de la vente</h3>
+                            <p className="text-2xl font-bold text-primary-600">{calculateSaleTotal().toLocaleString('fr-FR')} FCFA</p>
+                        </div>
+                        <div className="flex justify-end space-x-3">
+                            <Button variant="secondary" onClick={handleCloseModal}>Annuler</Button>
+                            <Button type="submit">Enregistrer la Vente</Button>
+                        </div>
                     </div>
                 </form>
             </Modal>

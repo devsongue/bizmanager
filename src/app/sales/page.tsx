@@ -1,38 +1,34 @@
 "use client";
 
 import React from 'react';
-import { Sales } from '@/components/sales/Sales';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { SalesContent } from '@/components/sales/SalesContent';
 import { useBusinesses } from '@/hooks/useBusiness';
-import { useCreateSale } from '@/hooks/useSale';
 
 export default function SalesPage() {
   const { data: businesses = [], isLoading: isBusinessesLoading } = useBusinesses();
-  const { mutateAsync: createSale } = useCreateSale();
   
   if (isBusinessesLoading) {
-    return <div className="flex justify-center items-center h-64">Chargement des ventes...</div>;
+    return (
+        <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Ventes</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+    );
   }
   
-  // For now, we'll show the first business
-  const activeBusiness = businesses[0];
-  
-  if (!activeBusiness) {
-    return <div className="flex justify-center items-center h-64">Aucune entreprise trouvée.</div>;
-  }
-  
-  const handleAddSale = async (newSale: any) => {
-    try {
-      await createSale(newSale);
-    } catch (error) {
-      console.error('Error creating sale:', error);
-    }
-  };
-
   return (
     <MainLayout businesses={businesses}>
       <div className="p-4 md:p-8">
-        <Sales business={activeBusiness} onAddSale={handleAddSale} />
+        <SalesContent />
       </div>
     </MainLayout>
   );

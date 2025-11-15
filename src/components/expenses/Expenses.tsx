@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Business, Expense } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -15,21 +15,43 @@ interface ExpensesProps {
 
 export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [formData, setFormData] = useState<Omit<Expense, 'id'>>({ 
+    const [formData, setFormData] = useState<Omit<Expense, 'id' | 'businessId' | 'reference' | 'paymentMethod' | 'approvedById' | 'receiptUrl' | 'createdAt' | 'updatedAt' | 'deletedAt'>>({ 
         date: new Date().toISOString().split('T')[0], 
         category: '', 
         description: '', 
         amount: 0 
     });
 
-    const { data: expenses = [], isLoading } = useExpenses(business.id);
+    // Catégories prédéfinies pour les dépenses
+    const expenseCategories = [
+        'Marketing',
+        'Nourriture',
+        'Transport',
+        'Unité',
+        'Salaire',
+        'Location',
+        'Électricité',
+        'Internet',
+        'Fournitures de bureau',
+        'Voyages',
+        'Maintenance',
+        'Assurances',
+        'Autre'
+    ];
+
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessId = useMemo(() => business.id, [business.id]);
+    
+    const { data: expenses = [], isLoading } = useExpenses(businessId);
     const createExpenseMutation = useCreateExpense();
 
     // Convert database expense objects to Expense type
-    const formattedExpenses = expenses.map((expense: any) => ({
-        ...expense,
-        date: typeof expense.date === 'string' ? expense.date : expense.date.toISOString().split('T')[0]
-    }));
+    const formattedExpenses = useMemo(() => {
+        return expenses.map((expense: any) => ({
+            ...expense,
+            date: typeof expense.date === 'string' ? expense.date : expense.date.toISOString().split('T')[0]
+        }));
+    }, [expenses]);
 
     const handleOpenModal = () => {
         setFormData({ 
@@ -56,16 +78,27 @@ export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) =>
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Create new expense
+        // Create new expense with all required fields
+        const expenseData: any = {
+            ...formData,
+            businessId: business.id,
+            reference: `EXP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            paymentMethod: 'CASH', // Valeur par défaut
+            approvedById: undefined, // Optionnel
+            receiptUrl: undefined, // Optionnel
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
         await createExpenseMutation.mutateAsync({ 
             businessId: business.id, 
-            data: formData 
+            data: expenseData
         });
         
         handleCloseModal();
     };
 
-    const columns = [
+    const columns = useMemo(() => [
         { header: 'Date', accessor: 'date' as keyof Expense },
         { header: 'Catégorie', accessor: 'category' as keyof Expense },
         { header: 'Description', accessor: 'description' as keyof Expense },
@@ -74,24 +107,63 @@ export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) =>
             accessor: 'amount' as keyof Expense,
             render: (item: Expense) => `${item.amount.toLocaleString('fr-FR')} FCFA`
         }
-    ];
+    ], []);
+
+    // Calculer le total des dépenses par catégorie
+    const expensesByCategory = useMemo(() => {
+        const categoryMap: { [key: string]: number } = {};
+        expenses.forEach((expense: any) => {
+            const category = expense.category || 'Non catégorisé';
+            categoryMap[category] = (categoryMap[category] || 0) + expense.amount;
+        });
+        return categoryMap;
+    }, [expenses]);
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des dépenses...</div>;
+        return (
+              <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Dépenses</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Dépenses</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Dépenses - {business.name}</h1>
                 <Button onClick={handleOpenModal}>Ajouter une Dépense</Button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <Table 
-                    columns={columns} 
-                    data={formattedExpenses} 
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
+                    <Table 
+                        columns={columns} 
+                        data={formattedExpenses} 
+                    />
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Répartition par catégorie</h3>
+                    <ul className="space-y-3">
+                        {Object.entries(expensesByCategory)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([category, amount]) => (
+                                <li key={category} className="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span className="font-medium text-gray-700">{category}</span>
+                                    <span className="font-bold text-primary-600">{amount.toLocaleString('fr-FR')} FCFA</span>
+                                </li>
+                            ))
+                        }
+                    </ul>
+                </div>
             </div>
 
             <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Ajouter une Dépense">
@@ -110,15 +182,22 @@ export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) =>
                     </div>
                     <div>
                         <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                        <input
-                            type="text"
+                        <select
                             id="category"
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
-                        />
+                        >
+                            <option value="">Sélectionner une catégorie</option>
+                            {expenseCategories.map((category) => (
+                                <option key={category} value={category}>
+                                    {category}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-1 text-sm text-gray-500">Sélectionnez une catégorie ou entrez une nouvelle catégorie</p>
                     </div>
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -128,7 +207,7 @@ export const Expenses: React.FC<ExpensesProps> = ({ business, onAddExpense }) =>
                             value={formData.description}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            required
+                            
                         />
                     </div>
                     <div>

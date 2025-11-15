@@ -194,8 +194,8 @@ export const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ allBus
     // Calculate user statistics
     const userStats = useMemo(() => {
         const totalUsers = allUsers.length;
-        const adminUsers = allUsers.filter(user => user.role === 'Admin').length;
-        const managerUsers = allUsers.filter(user => user.role === 'Gérant').length;
+        const adminUsers = allUsers.filter(user => user.role === 'ADMIN').length;
+        const managerUsers = allUsers.filter(user => user.role === 'MANAGER').length;
         
         return {
             totalUsers,
@@ -320,7 +320,7 @@ export const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ allBus
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-gray-600 dark:text-gray-400">Gérants</span>
-                            <span className="font-bold text-blue-600">{userStats.managerUsers}</span>
+                            <span className="font-bold text-orange-600">{userStats.managerUsers}</span>
                         </div>
                         <div className="pt-2">
                             <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">

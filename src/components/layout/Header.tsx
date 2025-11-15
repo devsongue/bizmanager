@@ -5,7 +5,7 @@ import type { User, Business, Product } from '../../types';
 interface HeaderProps {
     currentUser: User;
     businesses: Business[];
-    activeBusiness: Business;
+    activeBusiness: Business | null; // Correspondre au type du MainLayout
     setActiveBusinessId: (id: string) => void;
     onLogout: () => void;
     lowStockProducts: Product[];
@@ -43,18 +43,20 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
     const totalBusinesses = businesses.length;
     
     // Calculate total low stock products across all businesses for admins
-    const totalLowStockProducts = currentUser.role === 'Admin' 
+    const totalLowStockProducts = currentUser.role === 'ADMIN' 
         ? businesses.reduce((total, business) => total + (business.products?.filter(p => p.stock < 10).length || 0), 0)
         : lowStockProducts.length;
 
     return (
         <header className="flex items-center justify-between h-20 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{activeBusiness.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                    {activeBusiness ? activeBusiness.name : 'Aucune entreprise sélectionnée'}
+                </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {currentUser.role === 'Admin' 
+                    {currentUser.role === 'ADMIN' 
                         ? `${totalBusinesses} entreprise(s) gérée(s)` 
-                        : activeBusiness.type}
+                        : (activeBusiness ? activeBusiness.type : 'Aucune entreprise')}
                 </p>
             </div>
 
@@ -76,20 +78,19 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                     )}
                 </button>
 
-                {/* Business Switcher - Only show for non-admins or when there are multiple businesses */}
-                {(currentUser.role !== 'Admin' || businesses.length > 1) && (
+                {/* Business Switcher - Show for all users when there are multiple businesses */}
+                {businesses.length > 1 && activeBusiness && (
                     <div className="relative">
                         <select 
                             className="appearance-none w-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white dark:focus:bg-gray-600 focus:border-primary-500"
                             value={activeBusiness.id}
                             onChange={(e) => setActiveBusinessId(e.target.value)}
-                            disabled={businesses.length <= 1}
                         >
                             {businesses.map((b: any) => (
                                 <option key={b.id} value={b.id}>{b.name}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-3300">
                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                         </div>
                     </div>
@@ -103,17 +104,17 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                             <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 animate-ping"></span>
                         )}
                     </button>
-                    {alertsOpen && <AlertsDropdown products={currentUser.role === 'Admin' ? businesses.flatMap(b => b.products?.filter(p => p.stock < 10) || []) : lowStockProducts} />}
+                    {alertsOpen && <AlertsDropdown products={currentUser.role === 'ADMIN' ? businesses.flatMap(b => b.products?.filter(p => p.stock < 10) || []) : lowStockProducts} />}
                 </div>
 
                 {/* User Menu */}
                 <div className="relative">
                     <button onClick={() => setUserDropdownOpen(!userDropdownOpen)} className="flex items-center space-x-2 focus:outline-none">
-                        <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-10 h-10 rounded-full border-2 border-primary-500" />
+                        <img src={currentUser.avatarUrl || '/default-avatar.png'} alt={currentUser.name} className="w-10 h-10 rounded-full border-2 border-primary-500" />
                         <div>
                             <span className="text-sm font-semibold text-gray-700 dark:text-white">{currentUser.name}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-300 block">
-                                {currentUser.role === 'Admin' ? 'Administrateur' : 'Gérant'}
+                                {currentUser.role === 'ADMIN' ? 'Administrateur' : 'Gérant'}
                             </span>
                         </div>
                          <svg className={`w-4 h-4 text-gray-500 dark:text-gray-300 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

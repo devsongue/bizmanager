@@ -30,7 +30,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon }
     const changeColor = isPositive ? 'text-green-500' : 'text-red-500';
     
     const iconColors: { [key: string]: string } = {
-        revenue: 'bg-blue-500',
+        revenue: 'bg-orange-500',
         expense: 'bg-red-500',
         profit: 'bg-green-500',
         clients: 'bg-yellow-500',

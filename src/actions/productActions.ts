@@ -18,7 +18,7 @@ export async function getProducts(businessId: string) {
 }
 
 // Create a new product
-export async function createProduct(businessId: string, productData: Omit<Product, 'id'>) {
+export async function createProduct(businessId: string, productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>) {
   try {
     // Create the base product data
     const productDataToCreate: any = {
@@ -26,20 +26,28 @@ export async function createProduct(businessId: string, productData: Omit<Produc
       name: productData.name,
       category: productData.category,
       stock: productData.stock,
+      minStock: productData.minStock || 0,
+      costPrice: productData.costPrice || 0,
       retailPrice: productData.retailPrice,
       wholesalePrice: productData.wholesalePrice,
-      business: {
-        connect: { id: businessId },
-      },
+      businessId: businessId,
     };
     
-    // Add supplier fields if they exist
+    // Add optional fields if they exist
+    if (productData.sku) {
+      productDataToCreate.sku = productData.sku;
+    }
+    
+    if (productData.barcode) {
+      productDataToCreate.barcode = productData.barcode;
+    }
+    
     if (productData.supplierId) {
       productDataToCreate.supplierId = productData.supplierId;
     }
     
-    if (productData.supplierName) {
-      productDataToCreate.supplierName = productData.supplierName;
+    if (productData.images) {
+      productDataToCreate.images = productData.images;
     }
     
     const product = await prisma.product.create({
@@ -54,7 +62,7 @@ export async function createProduct(businessId: string, productData: Omit<Produc
 }
 
 // Update a product
-export async function updateProduct(id: string, productData: Partial<Product>) {
+export async function updateProduct(id: string, productData: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>) {
   try {
     // Create the update data object
     const updateData: any = {};
@@ -63,10 +71,14 @@ export async function updateProduct(id: string, productData: Partial<Product>) {
     if (productData.name !== undefined) updateData.name = productData.name;
     if (productData.category !== undefined) updateData.category = productData.category;
     if (productData.stock !== undefined) updateData.stock = productData.stock;
+    if (productData.minStock !== undefined) updateData.minStock = productData.minStock;
+    if (productData.costPrice !== undefined) updateData.costPrice = productData.costPrice;
     if (productData.retailPrice !== undefined) updateData.retailPrice = productData.retailPrice;
     if (productData.wholesalePrice !== undefined) updateData.wholesalePrice = productData.wholesalePrice;
+    if (productData.sku !== undefined) updateData.sku = productData.sku;
+    if (productData.barcode !== undefined) updateData.barcode = productData.barcode;
     if (productData.supplierId !== undefined) updateData.supplierId = productData.supplierId;
-    if (productData.supplierName !== undefined) updateData.supplierName = productData.supplierName;
+    if (productData.images !== undefined) updateData.images = productData.images;
     
     const product = await prisma.product.update({
       where: { id },

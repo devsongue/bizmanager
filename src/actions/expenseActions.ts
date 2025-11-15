@@ -18,18 +18,23 @@ export async function getExpenses(businessId: string) {
 }
 
 // Create a new expense
-export async function createExpense(businessId: string, expenseData: Omit<Expense, 'id'>) {
+export async function createExpense(businessId: string, expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>) {
   try {
+    // Generate a unique reference if not provided
+    const reference = expenseData.reference || `EXP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
     const expense = await prisma.expense.create({
       data: {
         id: `exp-${Date.now()}`,
+        reference: reference,
         date: new Date(expenseData.date),
         category: expenseData.category,
         description: expenseData.description,
         amount: expenseData.amount,
-        business: {
-          connect: { id: businessId },
-        },
+        paymentMethod: expenseData.paymentMethod,
+        receiptUrl: expenseData.receiptUrl,
+        approvedById: expenseData.approvedById,
+        businessId: businessId,
       },
     });
     
@@ -41,7 +46,7 @@ export async function createExpense(businessId: string, expenseData: Omit<Expens
 }
 
 // Update an expense
-export async function updateExpense(id: string, expenseData: Partial<Expense>) {
+export async function updateExpense(id: string, expenseData: Partial<Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>) {
   try {
     const expense = await prisma.expense.update({
       where: { id },

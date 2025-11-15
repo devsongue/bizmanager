@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Business, Client } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -18,16 +18,32 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState('');
     const [paymentAmount, setPaymentAmount] = useState(0);
-    const [formData, setFormData] = useState<Omit<Client, 'id' | 'balance'>>({ 
+    const [formData, setFormData] = useState<Omit<Client, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'loyaltyPoints' | 'lastPurchaseDate' | 'notes'>>({ 
         name: '', 
-        contact: '' 
+        contact: '',
+        telephone: '',
+        balance: 0,
+        email: '',
+        address: '',
+        company: '',
     });
 
-    const { data: clients = [], isLoading } = useClients(business.id);
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessId = useMemo(() => business.id, [business.id]);
+    
+    const { data: clients = [], isLoading } = useClients(businessId);
     const createClientMutation = useCreateClient();
 
     const handleOpenModal = () => {
-        setFormData({ name: '', contact: '' });
+        setFormData({ 
+            name: '', 
+            contact: '',
+            telephone: '',
+            balance: 0,
+            email: '',
+            address: '',
+            company: '',
+        });
         setIsModalOpen(true);
     };
 
@@ -62,10 +78,22 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
+        // Create new client with all required fields
+        const clientData: any = {
+            ...formData,
+            businessId: business.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Champs optionnels avec valeurs par défaut
+            loyaltyPoints: 0,
+            lastPurchaseDate: undefined,
+            notes: undefined
+        };
+        
         // Create new client with initial balance of 0
         await createClientMutation.mutateAsync({ 
             businessId: business.id, 
-            data: { ...formData, balance: 0 }
+            data: clientData
         });
         
         handleCloseModal();
@@ -77,7 +105,7 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
         handleClosePaymentModal();
     };
 
-    const columns = [
+    const columns = useMemo(() => [
         { header: 'Nom', accessor: 'name' as keyof Client },
         { header: 'Contact', accessor: 'contact' as keyof Client },
         { 
@@ -104,23 +132,36 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
                 </Button>
             )
         }
-    ];
+    ], []);
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des clients...</div>;
+        return (
+              <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Clients</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Clients</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Clients - {business.name}</h1>
                 <Button onClick={handleOpenModal}>Ajouter un Client</Button>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <Table 
                     columns={columns} 
-                    data={clients} 
+                    data={clients as any} 
                 />
             </div>
 
@@ -148,6 +189,50 @@ export const Clients: React.FC<ClientsProps> = ({ business, onAddClient, onRecor
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                        <input
+                            type="text"
+                            id="telephone"
+                            name="telephone"
+                            value={formData.telephone || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                        <input
+                            type="text"
+                            id="address"
+                            name="address"
+                            value={formData.address || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+                        <input
+                            type="text"
+                            id="company"
+                            name="company"
+                            value={formData.company || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">

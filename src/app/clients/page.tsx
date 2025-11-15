@@ -1,47 +1,34 @@
 "use client";
 
 import React from 'react';
-import { Clients } from '@/components/clients/Clients';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { ClientsContent } from '@/components/clients/ClientsContent';
 import { useBusinesses } from '@/hooks/useBusiness';
-import { useCreateClient } from '@/hooks/useClient';
 
 export default function ClientsPage() {
   const { data: businesses = [], isLoading: isBusinessesLoading } = useBusinesses();
-  const { mutateAsync: createClient } = useCreateClient();
   
   if (isBusinessesLoading) {
-    return <div className="flex justify-center items-center h-64">Chargement des clients...</div>;
+    return (
+        <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Clients</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+    );
   }
   
-  // For now, we'll show the first business
-  const activeBusiness = businesses[0];
-  
-  if (!activeBusiness) {
-    return <div className="flex justify-center items-center h-64">Aucune entreprise trouvée.</div>;
-  }
-  
-  const handleAddClient = async (newClient: any) => {
-    try {
-      await createClient(newClient);
-    } catch (error) {
-      console.error('Error creating client:', error);
-    }
-  };
-  
-  const handleRecordPayment = async (clientId: string, amount: number) => {
-    // Implementation would go here
-    console.log('Recording payment for client:', clientId, 'Amount:', amount);
-  };
-
   return (
     <MainLayout businesses={businesses}>
       <div className="p-4 md:p-8">
-        <Clients 
-          business={activeBusiness} 
-          onAddClient={handleAddClient} 
-          onRecordPayment={handleRecordPayment} 
-        />
+        <ClientsContent />
       </div>
     </MainLayout>
   );

@@ -3,348 +3,318 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create users with Ivorian names
+  // Create admin user
   const adminUser = await prisma.user.create({
     data: {
-      id: 'user-1',
-      name: 'Koffi Adjoa',
-      email: 'koffi.adjoa@devsonguesuite.ci',
-      password: 'password123',
-      role: 'Admin',
+      id: 'user-admin',
+      name: 'Foundanen Tuo',
+      email: 'foundanen.tuo@devsongue.com',
+      password: 'Devsongue61996@@', // Mot de passe en clair comme demandé
+      role: 'ADMIN',
       avatarUrl: 'https://i.pravatar.cc/150?u=admin',
     },
   });
 
-  const managerUser = await prisma.user.create({
+  // Create manager users
+  const saidUser = await prisma.user.create({
     data: {
-      id: 'user-2',
-      name: 'Awa Diallo',
-      email: 'awa.diallo@devsonguesuite.ci',
-      password: 'password123',
-      role: 'Gérant',
-      avatarUrl: 'https://i.pravatar.cc/150?u=gerant',
+      id: 'user-said',
+      name: 'Said',
+      email: 'said@devsongue.com',
+      password: 'S@ide25', // Mot de passe en clair comme demandé
+      role: 'MANAGER',
+      avatarUrl: 'https://i.pravatar.cc/150?u=said',
     },
   });
 
-  // Create businesses with Ivorian names
-  const boutique = await prisma.business.create({
+  const mariamUser = await prisma.user.create({
     data: {
-      id: 'biz-1',
-      name: 'Boutique Adjamé',
-      type: 'Commerce de détail',
+      id: 'user-mariam',
+      name: 'Mariam',
+      email: 'mariam@devsongue.com',
+      password: 'M@ariam25', // Mot de passe en clair comme demandé
+      role: 'MANAGER',
+      avatarUrl: 'https://i.pravatar.cc/150?u=mariam',
     },
   });
 
-  const services = await prisma.business.create({
+  const lucreceUser = await prisma.user.create({
     data: {
-      id: 'biz-2',
-      name: 'Services Numériques CI',
-      type: 'Fourniture de services',
+      id: 'user-lucrece',
+      name: 'Lucrece',
+      email: 'lucrece@devsongue.com',
+      password: 'Lucrece@25', // Mot de passe en clair comme demandé
+      role: 'MANAGER',
+      avatarUrl: 'https://i.pravatar.cc/150?u=lucrece',
     },
   });
 
-  // Associate manager with boutique
+  // Create businesses
+  const devSongue = await prisma.business.create({
+    data: {
+      id: 'biz-devsongue',
+      name: 'DEV SONGUE',
+      type: 'SHOP',
+    },
+  });
+
+  const devSongueGaz = await prisma.business.create({
+    data: {
+      id: 'biz-devsonguegaz',
+      name: 'DEV SONGUE GAZ',
+      type: 'SHOP',
+    },
+  });
+
+  // Associate managers with businesses
+  // Said manages DEV SONGUE
   await prisma.user.update({
-    where: { id: managerUser.id },
+    where: { id: saidUser.id },
     data: {
       managedBusinesses: {
-        connect: { id: boutique.id },
+        connect: { id: devSongue.id },
       },
     },
   });
 
-  // Create products for boutique (common Ivorian products)
-  const attieke = await prisma.product.create({
+  // Mariam manages DEV SONGUE GAZ
+  await prisma.user.update({
+    where: { id: mariamUser.id },
     data: {
-      id: 'prod-1',
-      name: 'Attiéké 1kg',
+      managedBusinesses: {
+        connect: { id: devSongueGaz.id },
+      },
+    },
+  });
+
+  // Lucrece manages DEV SONGUE
+  await prisma.user.update({
+    where: { id: lucreceUser.id },
+    data: {
+      managedBusinesses: {
+        connect: { id: devSongue.id },
+      },
+    },
+  });
+
+  // Create products for DEV SONGUE
+  const rice = await prisma.product.create({
+    data: {
+      id: 'prod-rice',
+      name: 'Riz 5kg',
       category: 'Alimentation',
-      stock: 50,
-      retailPrice: 500,
-      wholesalePrice: 450,
-      business: {
-        connect: { id: boutique.id },
-      },
-    },
-  });
-
-  const palmOil = await prisma.product.create({
-    data: {
-      id: 'prod-2',
-      name: 'Huile de palme 50cl',
-      category: 'Alimentation',
-      stock: 30,
-      retailPrice: 1200,
-      wholesalePrice: 1100,
-      business: {
-        connect: { id: boutique.id },
-      },
-    },
-  });
-
-  const soap = await prisma.product.create({
-    data: {
-      id: 'prod-3',
-      name: 'Savon de Marseille',
-      category: 'Hygiène',
       stock: 100,
-      retailPrice: 600,
-      wholesalePrice: 550,
-      business: {
-        connect: { id: boutique.id },
-      },
-    },
-  });
-
-  const coffee = await prisma.product.create({
-    data: {
-      id: 'prod-4',
-      name: 'Café Ivoirien 500g',
-      category: 'Alimentation',
-      stock: 25,
       retailPrice: 2500,
       wholesalePrice: 2300,
-      business: {
-        connect: { id: boutique.id },
-      },
+      businessId: devSongue.id,
     },
   });
 
-  // Create products for services
-  const maintenance = await prisma.product.create({
+  const oil = await prisma.product.create({
     data: {
-      id: 'prod-b2-1',
-      name: 'Maintenance Informatique',
-      category: 'Service',
-      stock: 999,
-      retailPrice: 150000,
-      wholesalePrice: 150000,
-      business: {
-        connect: { id: services.id },
-      },
+      id: 'prod-oil',
+      name: 'Huile de palme 1L',
+      category: 'Alimentation',
+      stock: 50,
+      retailPrice: 1200,
+      wholesalePrice: 1100,
+      businessId: devSongue.id,
     },
   });
 
-  // Create clients for boutique with Ivorian names and phone numbers
-  const amara = await prisma.client.create({
+  // Create products for DEV SONGUE GAZ
+  const gas12kg = await prisma.product.create({
     data: {
-      id: 'client-1',
-      name: 'Amara Koné',
+      id: 'prod-gas12',
+      name: 'Gaz 12kg',
+      category: 'Énergie',
+      stock: 30,
+      retailPrice: 8000,
+      wholesalePrice: 7500,
+      businessId: devSongueGaz.id,
+    },
+  });
+
+  const gas6kg = await prisma.product.create({
+    data: {
+      id: 'prod-gas6',
+      name: 'Gaz 6kg',
+      category: 'Énergie',
+      stock: 50,
+      retailPrice: 4500,
+      wholesalePrice: 4200,
+      businessId: devSongueGaz.id,
+    },
+  });
+
+  // Create clients for DEV SONGUE with Ivorian names and phone numbers
+  const client1 = await prisma.client.create({
+    data: {
+      id: 'client-ds-1',
+      name: 'Koffi Jean',
       contact: '01 23 45 67',
       telephone: '07 01 23 45 67', // Format ivoirien
-      email: 'amara.kone@email.ci',
-      address: 'Abidjan, Cocody',
-      balance: -12000,
-      business: {
-        connect: { id: boutique.id },
-      },
+      email: 'koffi.jean@email.ci',
+      address: 'Abidjan, Marcory',
+      balance: -5000,
+      businessId: devSongue.id,
     },
   });
 
-  const yao = await prisma.client.create({
+  const client2 = await prisma.client.create({
     data: {
-      id: 'client-2',
-      name: 'Yao Assi',
+      id: 'client-ds-2',
+      name: 'Awa Bamba',
       contact: '02 34 56 78',
       telephone: '05 45 67 89 01', // Format ivoirien
-      email: 'yao.assi@email.ci',
-      address: 'Abidjan, Treichville',
-      balance: 2500,
-      business: {
-        connect: { id: boutique.id },
-      },
+      email: 'awa.bamba@email.ci',
+      address: 'Abidjan, Koumassi',
+      balance: 2000,
+      businessId: devSongue.id,
     },
   });
 
-  // Create clients for services
-  const entrepriseA = await prisma.client.create({
+  // Create clients for DEV SONGUE GAZ
+  const clientGaz1 = await prisma.client.create({
     data: {
-      id: 'client-b2-1',
-      name: 'Société Ivoirienne de Services',
+      id: 'client-dsg-1',
+      name: 'Yao Kouassi',
       contact: '03 45 67 89',
       telephone: '01 50 60 70 80', // Format ivoirien
-      email: 'contact@siv.ci',
-      address: 'Abidjan, Plateau',
-      balance: -150000,
-      business: {
-        connect: { id: services.id },
-      },
+      email: 'yao.kouassi@email.ci',
+      address: 'Abidjan, Anyama',
+      balance: -12000,
+      businessId: devSongueGaz.id,
     },
   });
 
-  // Create suppliers with Ivorian names and details
-  const grossiste = await prisma.supplier.create({
+  // Create suppliers for DEV SONGUE
+  const supplier1 = await prisma.supplier.create({
     data: {
-      id: 'sup-1',
-      name: 'Grossiste Abidjan',
+      id: 'sup-ds-1',
+      name: 'Grossiste Marcory',
       product: 'Produits alimentaires',
       contacts: '01 20 30 40', // Format ivoirien
       description: 'Fournisseur de produits alimentaires locaux',
-      productTypes: 'Produits de base, épicerie',
-      business: {
-        connect: { id: boutique.id },
-      },
+      productTypes: 'Riz, huile, épicerie',
+      businessId: devSongue.id,
     },
   });
 
-  const savonnerie = await prisma.supplier.create({
+  // Create suppliers for DEV SONGUE GAZ
+  const supplierGaz1 = await prisma.supplier.create({
     data: {
-      id: 'sup-2',
-      name: 'Savonnerie d\'Abidjan',
-      product: 'Savons et détergents',
+      id: 'sup-dsg-1',
+      name: 'Fournisseur de Gaz Abidjan',
+      product: 'Gaz domestique',
       contacts: '02 21 31 41', // Format ivoirien
-      description: 'Fabricant local de savons artisanaux',
-      productTypes: 'Savons, détergents, produits d\'entretien',
-      business: {
-        connect: { id: boutique.id },
-      },
+      description: 'Distributeur de gaz pour usage domestique',
+      productTypes: 'Gaz 6kg, Gaz 12kg',
+      businessId: devSongueGaz.id,
     },
   });
 
-  // Create suppliers for services
-  const fournitures = await prisma.supplier.create({
-    data: {
-      id: 'sup-b2-1',
-      name: 'Fournitures Bureau CI',
-      product: 'Fournitures de bureau',
-      contacts: '03 22 32 42', // Format ivoirien
-      description: 'Spécialiste en fournitures de bureau et informatiques',
-      productTypes: 'Fournitures de bureau, équipements informatiques',
-      business: {
-        connect: { id: services.id },
-      },
-    },
-  });
-
-  // Create sales for boutique
+  // Create sales for DEV SONGUE
   await prisma.sale.create({
     data: {
-      id: 'sale-1',
+      id: 'sale-ds-1',
+      reference: 'REF-001',
       date: new Date('2023-10-26'),
-      clientId: amara.id,
-      clientName: amara.name,
-      productId: attieke.id,
-      productName: attieke.name,
-      quantity: 5,
-      unitPrice: 500,
-      total: 2500,
-      saleType: 'Vente en gros',
-      business: {
-        connect: { id: boutique.id },
-      },
+      clientId: client1.id,
+      productId: rice.id,
+      productName: rice.name,
+      quantity: 2,
+      unitPrice: 2500,
+      total: 5000,
+      profit: 400,
+      saleType: 'RETAIL',
+      paymentStatus: 'PAID',
+      paymentMethod: 'CASH',
+      businessId: devSongue.id,
     },
   });
 
   await prisma.sale.create({
     data: {
-      id: 'sale-2',
+      id: 'sale-ds-2',
+      reference: 'REF-002',
       date: new Date('2023-10-25'),
-      clientId: yao.id,
-      clientName: yao.name,
-      productId: palmOil.id,
-      productName: palmOil.name,
+      clientId: client2.id,
+      productId: oil.id,
+      productName: oil.name,
       quantity: 3,
       unitPrice: 1200,
       total: 3600,
-      saleType: 'Vente au détail',
-      business: {
-        connect: { id: boutique.id },
-      },
+      profit: 300,
+      saleType: 'WHOLESALE',
+      paymentStatus: 'PAID',
+      paymentMethod: 'CASH',
+      businessId: devSongue.id,
     },
   });
 
+  // Create sales for DEV SONGUE GAZ
   await prisma.sale.create({
     data: {
-      id: 'sale-3',
-      date: new Date('2023-09-15'),
-      clientId: amara.id,
-      clientName: amara.name,
-      productId: soap.id,
-      productName: soap.name,
-      quantity: 2,
-      unitPrice: 600,
-      total: 1200,
-      saleType: 'Vente au détail',
-      business: {
-        connect: { id: boutique.id },
-      },
-    },
-  });
-
-  // Create sales for services
-  await prisma.sale.create({
-    data: {
-      id: 'sale-b2-1',
+      id: 'sale-dsg-1',
+      reference: 'REF-003',
       date: new Date('2023-10-22'),
-      clientId: entrepriseA.id,
-      clientName: entrepriseA.name,
-      productId: maintenance.id,
-      productName: maintenance.name,
+      clientId: clientGaz1.id,
+      productId: gas12kg.id,
+      productName: gas12kg.name,
       quantity: 1,
-      unitPrice: 150000,
-      total: 150000,
-      saleType: 'Vente au détail',
-      business: {
-        connect: { id: services.id },
-      },
+      unitPrice: 8000,
+      total: 8000,
+      profit: 500,
+      saleType: 'RETAIL',
+      paymentStatus: 'PAID',
+      paymentMethod: 'CASH',
+      businessId: devSongueGaz.id,
     },
   });
 
-  // Create expenses for boutique (common Ivorian business expenses)
+  // Create expenses for DEV SONGUE (common Ivorian business expenses)
   await prisma.expense.create({
     data: {
-      id: 'exp-1',
+      id: 'exp-ds-1',
+      reference: 'EXP-001',
       date: new Date('2023-10-20'),
       category: 'Salaire',
       description: 'Salaire employé',
-      amount: 75000,
-      business: {
-        connect: { id: boutique.id },
-      },
+      amount: 80000,
+      paymentMethod: 'CASH',
+      businessId: devSongue.id,
     },
   });
 
   await prisma.expense.create({
     data: {
-      id: 'exp-2',
+      id: 'exp-ds-2',
+      reference: 'EXP-002',
       date: new Date('2023-10-15'),
       category: 'Services publics',
       description: 'Facture CIE',
       amount: 15000,
-      business: {
-        connect: { id: boutique.id },
-      },
+      paymentMethod: 'CASH',
+      businessId: devSongue.id,
     },
   });
 
+  // Create expenses for DEV SONGUE GAZ
   await prisma.expense.create({
     data: {
-      id: 'exp-3',
-      date: new Date('2023-09-10'),
-      category: 'Télécommunications',
-      description: 'Achat de crédit mobile',
-      amount: 10000,
-      business: {
-        connect: { id: boutique.id },
-      },
-    },
-  });
-
-  // Create expenses for services
-  await prisma.expense.create({
-    data: {
-      id: 'exp-b2-1',
+      id: 'exp-dsg-1',
+      reference: 'EXP-003',
       date: new Date('2023-10-05'),
       category: 'Loyer',
-      description: 'Loyer bureau Abidjan',
-      amount: 200000,
-      business: {
-        connect: { id: services.id },
-      },
+      description: 'Loyer dépôt',
+      amount: 150000,
+      paymentMethod: 'CASH',
+      businessId: devSongueGaz.id,
     },
   });
 
-  console.log('Database seeded successfully with Ivorian data!');
+  console.log('Database seeded successfully with specified data!');
 }
 
 main()

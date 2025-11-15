@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getBusinesses, 
+  getBusinessById,
   createBusiness, 
   updateBusiness, 
   deleteBusiness 
@@ -13,6 +14,16 @@ export const useBusinesses = () => {
     queryKey: ['businesses'],
     queryFn: getBusinesses,
     select: (data) => data.success ? data.data : [],
+  });
+};
+
+// Hook for fetching a single business by ID
+export const useBusiness = (id: string) => {
+  return useQuery({
+    queryKey: ['business', id],
+    queryFn: () => getBusinessById(id),
+    select: (data) => data.success ? data.data : null,
+    enabled: !!id, // Only run the query if id is truthy
   });
 };
 

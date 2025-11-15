@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Business, Supplier } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -18,7 +18,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
     const [isEditing, setIsEditing] = useState(false);
     const [currentSupplier, setCurrentSupplier] = useState<Supplier | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [formData, setFormData] = useState<Omit<Supplier, 'id'>>({ 
+    const [formData, setFormData] = useState<Omit<Supplier, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'email' | 'telephone' | 'address' | 'rating' | 'notes'>>({ 
         name: '', 
         product: '',
         contacts: '',
@@ -26,7 +26,10 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         productTypes: ''
     });
 
-    const { data: suppliers = [], isLoading } = useSuppliers(business.id);
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessId = useMemo(() => business.id, [business.id]);
+    
+    const { data: suppliers = [], isLoading } = useSuppliers(businessId);
     const createSupplierMutation = useCreateSupplier();
     const updateSupplierMutation = useUpdateSupplier();
     const deleteSupplierMutation = useDeleteSupplier();
@@ -67,7 +70,13 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         } else {
             setIsEditing(false);
             setCurrentSupplier(null);
-            setFormData({ name: '', product: '', contacts: '', description: '', productTypes: '' });
+            setFormData({ 
+                name: '', 
+                product: '',
+                contacts: '',
+                description: '',
+                productTypes: ''
+            });
         }
         setErrors({});
         setIsModalOpen(true);
@@ -104,18 +113,32 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
             return;
         }
         
+        // Ajouter les champs requis manquants
+        const supplierData: any = {
+            ...formData,
+            businessId: business.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Champs optionnels avec valeurs par défaut
+            email: undefined,
+            telephone: undefined,
+            address: undefined,
+            rating: undefined,
+            notes: undefined
+        };
+        
         try {
             if (isEditing && currentSupplier) {
                 // Update existing supplier
                 await updateSupplierMutation.mutateAsync({ 
                     id: currentSupplier.id, 
-                    data: formData 
+                    data: supplierData 
                 });
             } else {
                 // Create new supplier
                 await createSupplierMutation.mutateAsync({ 
                     businessId: business.id, 
-                    data: formData 
+                    data: supplierData 
                 });
             }
             
@@ -137,22 +160,22 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         }
     };
 
-    const columns: any[] = [
-        { header: 'Nom', accessor: 'name' },
-        { header: 'Produit', accessor: 'product' },
+    const columns = useMemo(() => [
+        { header: 'Nom', accessor: 'name' as keyof Supplier },
+        { header: 'Produit', accessor: 'product' as keyof Supplier },
         { 
             header: 'Contacts', 
-            accessor: 'contacts',
+            accessor: 'contacts' as keyof Supplier,
             render: (item: Supplier) => item.contacts || '-'
         },
         { 
             header: 'Types de produits', 
-            accessor: 'productTypes',
+            accessor: 'productTypes' as keyof Supplier,
             render: (item: Supplier) => item.productTypes || '-'
         },
         {
             header: 'Actions',
-            accessor: 'id',
+            accessor: 'id' as keyof Supplier,
             render: (item: Supplier) => (
                 <div className="flex space-x-2">
                     <Button 
@@ -172,23 +195,36 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
                 </div>
             )
         }
-    ];
+    ], []);
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des fournisseurs...</div>;
+        return (
+              <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Fournisseurs</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Fournisseurs</h1>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Fournisseurs - {business.name}</h1>
                 <Button onClick={() => handleOpenModal()}>Ajouter un Fournisseur</Button>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <Table 
                     columns={columns} 
-                    data={suppliers} 
+                    data={suppliers as any} 
                 />
             </div>
 
@@ -232,7 +268,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
                             name="contacts"
                             value={formData.contacts || ''}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                         />
                     </div>
                     <div>
@@ -243,7 +279,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
                             name="productTypes"
                             value={formData.productTypes || ''}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                         />
                     </div>
                     <div>
@@ -253,25 +289,14 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
                             name="description"
                             value={formData.description || ''}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                         />
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">
                         <Button type="button" variant="secondary" onClick={handleCloseModal}>Annuler</Button>
-                        <Button 
-                            type="submit" 
-                            disabled={createSupplierMutation.isPending || updateSupplierMutation.isPending}
-                        >
-                            {createSupplierMutation.isPending || updateSupplierMutation.isPending ? (
-                                <span className="flex items-center">
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Enregistrement...
-                                </span>
-                            ) : isEditing ? 'Modifier' : 'Ajouter'}
+                        <Button type="submit" disabled={createSupplierMutation.isPending || updateSupplierMutation.isPending}>
+                            {createSupplierMutation.isPending || updateSupplierMutation.isPending ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
                         </Button>
                     </div>
                 </form>

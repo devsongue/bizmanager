@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Mail, LogIn, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/shared';
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,20 +21,9 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const success = await login(email, password);
       
-      // Mock authentication - in a real app, this would be an API call
-      if ((email === 'admin@devsonguesuite.ci' && password === 'password123') || 
-          (email === 'awa.diallo@devsonguesuite.ci' && password === 'password123')) {
-        
-        // Store user info in localStorage (in a real app, this would be a secure token)
-        const user = email === 'admin@devsonguesuite.ci' 
-          ? { id: 'user-1', name: 'Koffi Adjoa', email, role: 'Admin' }
-          : { id: 'user-2', name: 'Awa Diallo', email, role: 'Gérant' };
-        
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
+      if (success) {
         // Check for redirect URL in cookies
         const cookies = document.cookie.split(';').reduce((acc, cookie) => {
           const [name, value] = cookie.trim().split('=');
@@ -40,7 +31,10 @@ export default function LoginPage() {
           return acc;
         }, {} as Record<string, string>);
         
-        const redirectUrl = cookies['redirect-url'] || (user.role === 'Admin' ? '/admin-panel' : '/dashboard');
+        // Decode the redirect URL if it exists
+        const redirectUrl = cookies['redirect-url'] ? 
+          decodeURIComponent(cookies['redirect-url']) : 
+          '/dashboard';
         
         // Clear the redirect cookie
         document.cookie = 'redirect-url=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -151,7 +145,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 rounded-lg transition duration-200 bg-green-600 hover:bg-green-700 focus:ring-green-500"
+              className="group text-white relative w-full flex justify-center py-3 px-4 rounded-lg transition duration-200 bg-orange-600 hover:bg-orange-700 focus:ring-orange-500"
             >
               {isLoading ? (
                 <>
@@ -171,18 +165,7 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>
-            En vous connectant, vous acceptez nos{' '}
-            <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-              Conditions d'utilisation
-            </a>{' '}
-            et notre{' '}
-            <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-              Politique de confidentialité
-            </a>.
-          </p>
-        </div>
+
       </div>
     </div>
   );

@@ -345,7 +345,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
     };
 
     if (businessesLoading || usersLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement du panneau d'administration...</div>;
+        return (
+            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+                <div className="flex items-center space-x-4 p-6">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="font-semibold text-gray-800">Panneau d'administration</p>
+                        <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     // Render overview view for admin with enhanced metrics
@@ -355,9 +368,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Résumé Exécutif</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">Total Entreprises</h3>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-300">{totalBusinesses}</p>
+                    <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-200">Total Entreprises</h3>
+                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-300">{totalBusinesses}</p>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">Utilisateurs Actifs</h3>
@@ -382,7 +395,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                             {totalRevenue > 0 ? formatPercentage(calculateGrossProfitMargin(
                                 displayedBusinesses.flatMap((b: any) => b.sales),
                                 displayedBusinesses.flatMap((b: any) => b.products)
@@ -596,15 +609,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'Admin'
-                                                ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
-                                                : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'ADMIN'
+                                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                                            : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
                                             }`}>
                                             {user.role}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {user.role === 'Admin'
+                                        {user.role === 'ADMIN'
                                             ? 'Toutes'
                                             : user.managedBusinessIds
                                                 ? `${user.managedBusinessIds.length} entreprise(s)`
@@ -664,7 +677,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                             {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) =>
                                 sum + calculateGrossProfit(business.sales, business.expenses, business.products), 0))}
                         </p>
@@ -780,7 +793,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{totalSales}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">{formatCurrency(totalRevenue)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateCOGS(business.sales, business.products), 0))}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">{formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateGrossProfit(business.sales, business.expenses, business.products), 0))}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600">{formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateGrossProfit(business.sales, business.expenses, business.products), 0))}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOperatingExpenses(business.expenses), 0))}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">{formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOneTimeExpenses(business.expenses), 0))}</td>
                                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -811,7 +824,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                                 return acc;
                             }, {} as Record<string, number>)
                         ) as [string, number][];
-                        
+
                         return expenseData.map(([category, amount]) => (
                             <div key={category} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">{category}</h3>
@@ -853,8 +866,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <button
                     onClick={() => setAdminView('overview')}
                     className={`px-4 py-2 rounded-lg transition-colors ${adminView === 'overview'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                 >
                     Vue d'Ensemble
@@ -862,8 +875,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <button
                     onClick={() => setAdminView('businesses')}
                     className={`px-4 py-2 rounded-lg transition-colors ${adminView === 'businesses'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                 >
                     Entreprises
@@ -871,8 +884,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <button
                     onClick={() => setAdminView('users')}
                     className={`px-4 py-2 rounded-lg transition-colors ${adminView === 'users'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                 >
                     Utilisateurs
@@ -880,8 +893,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <button
                     onClick={() => setAdminView('financial')}
                     className={`px-4 py-2 rounded-lg transition-colors ${adminView === 'financial'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                 >
                     Finances
@@ -889,8 +902,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                 <button
                     onClick={() => setAdminView('products')}
                     className={`px-4 py-2 rounded-lg transition-colors ${adminView === 'products'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                 >
                     Produits
@@ -920,7 +933,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                             </select>
                         </div>
                     </div>
-                    
+
                 </div>
             )}
         </div>

@@ -112,12 +112,12 @@ const InventoryValuationCard: React.FC<{ valuation: { totalRetailValue: number; 
     <div className="bg-white p-6 rounded-xl shadow-lg">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Valorisation des Stocks</h3>
         <div className="space-y-4 mt-8">
-            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+            <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
                 <div>
-                    <p className="font-semibold text-blue-800">Valeur au Prix de Détail</p>
-                    <p className="text-xs text-blue-600">Potentiel de revenu</p>
+                    <p className="font-semibold text-orange-800">Valeur au Prix de Détail</p>
+                    <p className="text-xs text-orange-600">Potentiel de revenu</p>
                 </div>
-                <p className="text-2xl font-bold text-blue-600">{valuation.totalRetailValue.toLocaleString('fr-FR')} FCFA</p>
+                <p className="text-2xl font-bold text-orange-600">{valuation.totalRetailValue.toLocaleString('fr-FR')} FCFA</p>
             </div>
             <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
                  <div>
@@ -193,30 +193,38 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
     const [activeIndex, setActiveIndex] = useState(0);
     const [profitSortKey, setProfitSortKey] = useState<'totalProfit' | 'totalQuantity'>('totalProfit');
 
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessData = useMemo(() => ({
+        sales: business.sales || [],
+        expenses: business.expenses || [],
+        products: business.products || [],
+        clients: business.clients || []
+    }), [business.id, business.sales?.length, business.expenses?.length, business.products?.length, business.clients?.length]);
+
     const filteredData = useMemo(() => {
         const { start, end } = dateRange;
         const startDate = start ? new Date(start) : null;
         const endDate = end ? new Date(end) : null;
 
         if (!startDate || !endDate) {
-            return { sales: business.sales, expenses: business.expenses };
+            return { sales: businessData.sales, expenses: businessData.expenses };
         }
         
         // Add 1 day to end date to make it inclusive
         endDate.setDate(endDate.getDate() + 1);
 
-        const sales = business.sales.filter(s => {
+        const sales = businessData.sales.filter(s => {
             const saleDate = new Date(s.date);
             return saleDate >= startDate && saleDate <= endDate;
         });
 
-        const expenses = business.expenses.filter(e => {
+        const expenses = businessData.expenses.filter(e => {
             const expDate = new Date(e.date);
             return expDate >= startDate && expDate <= endDate;
         });
 
         return { sales, expenses };
-    }, [business, dateRange]);
+    }, [businessData, dateRange]);
 
     const monthlyChartData = useMemo(() => {
         return processMonthlyData(filteredData.sales, filteredData.expenses);
@@ -231,17 +239,18 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
     }, [filteredData.expenses]);
     
     const inventoryValuation = useMemo(() => {
-        const totalRetailValue = business.products.reduce((sum, p) => sum + (p.stock * p.retailPrice), 0);
-        const totalWholesaleValue = business.products.reduce((sum, p) => sum + (p.stock * p.wholesalePrice), 0);
+        const totalRetailValue = businessData.products.reduce((sum, p) => sum + (p.stock * p.retailPrice), 0);
+        const totalWholesaleValue = businessData.products.reduce((sum, p) => sum + (p.stock * p.wholesalePrice), 0);
         return { totalRetailValue, totalWholesaleValue };
-    }, [business.products]);
+    }, [businessData.products]);
 
     const bestSellingProducts = useMemo(() => {
-        const productSales: { [key: string]: { productName: string; totalQuantity: number; totalRevenue: number } } = {};
+        const productSales: { [key: string]: { productId: string; productName: string; totalQuantity: number; totalRevenue: number } } = {};
 
         filteredData.sales.forEach(sale => {
             if (!productSales[sale.productId]) {
                 productSales[sale.productId] = {
+                    productId: sale.productId,
                     productName: sale.productName,
                     totalQuantity: 0,
                     totalRevenue: 0,
@@ -251,72 +260,111 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
             productSales[sale.productId].totalRevenue += sale.total;
         });
 
-        return Object.entries(productSales)
-            .map(([productId, data]) => ({ productId, ...data }))
+        // Convert to array and sort by totalRevenue
+        return Object.values(productSales)
             .sort((a, b) => b.totalRevenue - a.totalRevenue)
-            .slice(0, 10);
+            .slice(0, 10); // Top 10 products
     }, [filteredData.sales]);
-    
-    const profitByProduct = useMemo(() => {
-        const profitMap: { [key: string]: { productName: string; totalProfit: number; totalQuantity: number; wholesalePrice: number; } } = {};
 
+    // Calcul des profits par produit
+    const productProfits = useMemo(() => {
+        const profitMap: { [key: string]: { productName: string; totalProfit: number; totalQuantity: number; wholesalePrice: number } } = {};
+
+        // Calculer le coût total des produits achetés
+        const productCosts: { [key: string]: number } = {};
+        
         filteredData.sales.forEach(sale => {
-            const product = business.products.find(p => p.id === sale.productId);
-            if (!product) {
-                return; // Skip if product not found
+            const productId = sale.productId;
+            if (!productCosts[productId]) {
+                const product = businessData.products.find(p => p.id === productId);
+                productCosts[productId] = product ? product.wholesalePrice : 0;
             }
-
-            const saleProfit = (sale.unitPrice - product.wholesalePrice) * sale.quantity;
-
-            if (!profitMap[sale.productId]) {
-                profitMap[sale.productId] = {
+            
+            const cost = productCosts[productId] * sale.quantity;
+            const revenue = sale.total;
+            const profit = revenue - cost;
+            
+            if (!profitMap[productId]) {
+                profitMap[productId] = {
                     productName: sale.productName,
                     totalProfit: 0,
                     totalQuantity: 0,
-                    wholesalePrice: product.wholesalePrice,
+                    wholesalePrice: productCosts[productId]
                 };
             }
-            profitMap[sale.productId].totalProfit += saleProfit;
-            profitMap[sale.productId].totalQuantity += sale.quantity;
+            
+            profitMap[productId].totalProfit += profit;
+            profitMap[productId].totalQuantity += sale.quantity;
         });
 
-        return Object.values(profitMap)
-            .sort((a, b) => b[profitSortKey] - a[profitSortKey])
-            .slice(0, 15); // Show top 15
-    }, [filteredData.sales, business.products, profitSortKey]);
+        // Convertir en tableau et trier
+        let result = Object.values(profitMap);
+        
+        if (profitSortKey === 'totalProfit') {
+            result = result.sort((a, b) => b.totalProfit - a.totalProfit);
+        } else {
+            result = result.sort((a, b) => b.totalQuantity - a.totalQuantity);
+        }
+        
+        return result.slice(0, 15); // Top 15 products
+    }, [filteredData.sales, businessData.products, profitSortKey]);
 
+    const totalRevenue = useMemo(() => {
+        return filteredData.sales.reduce((sum, sale) => sum + sale.total, 0);
+    }, [filteredData.sales]);
 
-    const onPieEnter = (_: any, index: number) => {
-        setActiveIndex(index);
-    };
+    const totalExpenses = useMemo(() => {
+        return filteredData.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    }, [filteredData.expenses]);
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-    // FIX: The `activeIndex` prop is valid for the Pie component but missing in some versions of @types/recharts.
-    // We cast it to `any` to bypass the TypeScript error.
-    const activeIndexProp: any = { activeIndex };
+    const totalProfit = useMemo(() => {
+        return totalRevenue - totalExpenses;
+    }, [totalRevenue, totalExpenses]);
 
     const handleDateRangeChange = (start: string, end: string) => {
         setDateRange({ start, end });
     };
 
-    return (
-        <div className="space-y-6">
-            {!hideFilters && (
-                <>
-                    <h1 className="text-3xl font-bold text-gray-800">Rapports</h1>
+    const onPieEnter = (_: any, index: number) => {
+        setActiveIndex(index);
+    };
 
-                    <div className="bg-white p-4 rounded-lg shadow-md">
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
+
+    return (
+        <div className="space-y-8">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-gray-800">Rapports - {business.name}</h1>
+                {!hideFilters && (
+                    <div className="bg-white p-3 rounded-lg shadow-md">
                         <DateFilter onDateRangeChange={handleDateRangeChange} />
                     </div>
-                </>
-            )}
-            
+                )}
+            </div>
+
+            {/* Statistiques récapitulatives */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                    <h3 className="text-lg font-semibold mb-2">Revenu Total</h3>
+                    <p className="text-3xl font-bold">{totalRevenue.toLocaleString('fr-FR')} FCFA</p>
+                </div>
+                <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
+                    <h3 className="text-lg font-semibold mb-2">Dépenses Totales</h3>
+                    <p className="text-3xl font-bold">{totalExpenses.toLocaleString('fr-FR')} FCFA</p>
+                </div>
+                <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+                    <h3 className="text-lg font-semibold mb-2">Profit Net</h3>
+                    <p className="text-3xl font-bold">{totalProfit.toLocaleString('fr-FR')} FCFA</p>
+                </div>
+            </div>
+
+            {/* Graphiques */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Graphique mensuel */}
                 <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Aperçu Mensuel (Ventes vs Dépenses)</h3>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Performance Mensuelle</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                         <BarChart data={monthlyChartData}>
+                        <BarChart data={monthlyChartData}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 12 }} />
                             <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(value) => new Intl.NumberFormat('fr-FR').format(value as number)} />
@@ -334,39 +382,54 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
+
+                {/* Répartition des dépenses par catégorie */}
                 <div className="bg-white p-6 rounded-xl shadow-lg">
                     <h3 className="text-xl font-bold text-gray-800 mb-4">Répartition des Dépenses</h3>
-                     <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                             <Pie 
-                                {...activeIndexProp}
-                                activeShape={renderActiveShape} 
-                                data={expenseByCategory} 
-                                cx="50%" 
-                                cy="50%" 
-                                innerRadius={60}
-                                outerRadius={80} 
-                                fill="#8884d8"
-                                dataKey="value"
-                                onMouseEnter={onPieEnter}
-                            >
-                                {expenseByCategory.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-                <BestSellingProductsCard products={bestSellingProducts} />
-                <InventoryValuationCard valuation={inventoryValuation} />
-                <div className="lg:col-span-2">
-                    <ProductProfitChart 
-                        data={profitByProduct}
-                        sortKey={profitSortKey}
-                        setSortKey={setProfitSortKey} 
-                    />
+                    {expenseByCategory.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    activeIndex={activeIndex}
+                                    activeShape={renderActiveShape}
+                                    data={expenseByCategory}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    nameKey="name"
+                                    onMouseEnter={onPieEnter}
+                                >
+                                    {expenseByCategory.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => `${(value as number).toLocaleString('fr-FR')} FCFA`} />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-64">
+                            <p className="text-gray-500">Aucune dépense à afficher pour la période sélectionnée.</p>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Produits les plus rentables et valorisation des stocks */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <BestSellingProductsCard products={bestSellingProducts} />
+                <InventoryValuationCard valuation={inventoryValuation} />
+            </div>
+
+            {/* Analyse de rentabilité par produit */}
+            <ProductProfitChart 
+                data={productProfits} 
+                sortKey={profitSortKey} 
+                setSortKey={setProfitSortKey} 
+            />
         </div>
     );
 };

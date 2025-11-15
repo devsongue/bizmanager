@@ -18,23 +18,30 @@ export async function getSales(businessId: string) {
 }
 
 // Create a new sale
-export async function createSale(businessId: string, saleData: Omit<Sale, 'id'>) {
+export async function createSale(businessId: string, saleData: Omit<Sale, 'id' | 'reference' | 'createdAt' | 'updatedAt' | 'deletedAt'>) {
   try {
+    // Generate a unique reference
+    const reference = `REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
     const sale = await prisma.sale.create({
       data: {
         id: `sale-${Date.now()}`,
+        reference: reference,
         date: new Date(saleData.date),
         clientId: saleData.clientId,
-        clientName: saleData.clientName,
         productId: saleData.productId,
         productName: saleData.productName,
         quantity: saleData.quantity,
         unitPrice: saleData.unitPrice,
+        discount: saleData.discount || 0,
+        tax: saleData.tax || 0,
         total: saleData.total,
+        profit: saleData.profit || 0,
         saleType: saleData.saleType,
-        business: {
-          connect: { id: businessId },
-        },
+        paymentStatus: saleData.paymentStatus,
+        paymentMethod: saleData.paymentMethod,
+        businessId: businessId,
+        userId: saleData.userId,
       },
     });
     
@@ -46,7 +53,7 @@ export async function createSale(businessId: string, saleData: Omit<Sale, 'id'>)
 }
 
 // Update a sale
-export async function updateSale(id: string, saleData: Partial<Sale>) {
+export async function updateSale(id: string, saleData: Partial<Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>) {
   try {
     const sale = await prisma.sale.update({
       where: { id },

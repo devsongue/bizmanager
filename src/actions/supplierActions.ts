@@ -18,7 +18,7 @@ export async function getSuppliers(businessId: string) {
 }
 
 // Create a new supplier
-export async function createSupplier(businessId: string, supplierData: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createSupplier(businessId: string, supplierData: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>) {
   try {
     const supplier = await prisma.supplier.create({
       data: {
@@ -26,11 +26,14 @@ export async function createSupplier(businessId: string, supplierData: Omit<Supp
         name: supplierData.name,
         product: supplierData.product,
         contacts: supplierData.contacts,
+        email: supplierData.email,
+        telephone: supplierData.telephone,
+        address: supplierData.address,
         description: supplierData.description,
         productTypes: supplierData.productTypes,
-        business: {
-          connect: { id: businessId },
-        },
+        rating: supplierData.rating,
+        notes: supplierData.notes,
+        businessId: businessId,
       },
     });
     
@@ -42,7 +45,7 @@ export async function createSupplier(businessId: string, supplierData: Omit<Supp
 }
 
 // Update a supplier
-export async function updateSupplier(id: string, supplierData: Partial<Supplier>) {
+export async function updateSupplier(id: string, supplierData: Partial<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>) {
   try {
     const supplier = await prisma.supplier.update({
       where: { id },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Business, Product } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -20,14 +20,15 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
     const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [restockingProduct, setRestockingProduct] = useState<Product | null>(null);
-    const [formData, setFormData] = useState<Omit<Product, 'id'>>({ 
+    const [formData, setFormData] = useState<Omit<Product, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'sku' | 'barcode' | 'images'>>({ 
         name: '', 
         category: '', 
-        stock: 0, 
+        stock: 0,
+        minStock: 10, // Valeur par défaut pour le stock minimum
+        costPrice: 0,
         retailPrice: 0, 
         wholesalePrice: 0,
-        supplierId: '',
-        supplierName: ''
+        supplierId: undefined,
     });
     const [restockData, setRestockData] = useState({ 
         quantity: 0, 
@@ -35,11 +36,13 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         unitCost: 0,
         totalCost: 0,
         supplierId: '',
-        supplierName: ''
     });
 
-    const { data: products = [], isLoading } = useProducts(business.id);
-    const { data: suppliers = [], isLoading: isSuppliersLoading } = useSuppliers(business.id);
+    // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
+    const businessId = useMemo(() => business.id, [business.id]);
+    
+    const { data: products = [], isLoading } = useProducts(businessId);
+    const { data: suppliers = [], isLoading: isSuppliersLoading } = useSuppliers(businessId);
     const createProductMutation = useCreateProduct();
     const updateProductMutation = useUpdateProduct();
     const restockProductMutation = useRestockProduct();
@@ -51,21 +54,23 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                 name: product.name,
                 category: product.category,
                 stock: product.stock,
+                minStock: product.minStock || 0,
+                costPrice: product.costPrice || 0,
                 retailPrice: product.retailPrice,
                 wholesalePrice: product.wholesalePrice,
-                supplierId: product.supplierId ?? '',
-                supplierName: product.supplierName ?? ''
+                supplierId: product.supplierId ?? undefined,
             });
         } else {
             setEditingProduct(null);
             setFormData({ 
                 name: '', 
                 category: '', 
-                stock: 0, 
+                stock: 0,
+                minStock: 0,
+                costPrice: 0,
                 retailPrice: 0, 
                 wholesalePrice: 0,
-                supplierId: '',
-                supplierName: ''
+                supplierId: undefined,
             });
         }
         setIsModalOpen(true);
@@ -81,7 +86,6 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             unitCost: unitCost,
             totalCost: 0,
             supplierId: product.supplierId ?? '',
-            supplierName: product.supplierName ?? ''
         });
         setIsRestockModalOpen(true);
     };
@@ -100,7 +104,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'stock' || name === 'retailPrice' || name === 'wholesalePrice' ? Number(value) : value
+            [name]: name === 'stock' || name === 'minStock' || name === 'costPrice' || name === 'retailPrice' || name === 'wholesalePrice' ? Number(value) : value
         }));
     };
 
@@ -113,7 +117,6 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             setRestockData(prev => ({
                 ...prev,
                 supplierId: value,
-                supplierName: selectedSupplier ? selectedSupplier.name : ''
             }));
             return;
         }
@@ -142,20 +145,45 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         });
     };
 
+    // Fonction pour calculer la marge bénéficiaire
+    const calculateProfitMargin = (costPrice: number, retailPrice: number) => {
+        if (costPrice <= 0) return 0;
+        return ((retailPrice - costPrice) / costPrice) * 100;
+    };
+
+    // Fonction pour obtenir la couleur de la marge en fonction de sa valeur
+    const getMarginColor = (margin: number) => {
+        if (margin >= 50) return 'text-green-600';
+        if (margin >= 20) return 'text-yellow-600';
+        return 'text-red-600';
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Ajouter les champs requis manquants
+        const productData: any = {
+            ...formData,
+            businessId: business.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Champs optionnels avec valeurs par défaut
+            sku: undefined,
+            barcode: undefined,
+            images: undefined
+        };
         
         if (editingProduct) {
             // Update existing product
             await updateProductMutation.mutateAsync({ 
                 id: editingProduct.id, 
-                data: formData 
+                data: productData 
             });
         } else {
             // Create new product
             await createProductMutation.mutateAsync({ 
                 businessId: business.id, 
-                data: formData 
+                data: productData 
             });
         }
         
@@ -181,19 +209,14 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         { header: 'Nom', accessor: 'name' },
         { header: 'Catégorie', accessor: 'category' },
         { 
-            header: 'Fournisseur', 
-            accessor: 'supplierName',
-            render: (item: Product) => item.supplierName || 'Non spécifié'
-        },
-        { 
             header: 'Stock', 
             accessor: 'stock',
             render: (item: Product) => (
                 <div className="flex items-center">
-                    <span className={item.stock < 10 ? "text-red-600 font-bold" : ""}>
+                    <span className={item.stock < item.minStock ? "text-red-600 font-bold" : ""}>
                         {item.stock}
                     </span>
-                    {item.stock < 10 && (
+                    {item.stock < item.minStock && (
                         <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
                             Faible
                         </span>
@@ -210,6 +233,18 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             header: 'Prix Gros', 
             accessor: 'wholesalePrice',
             render: (item: Product) => `${item.wholesalePrice.toLocaleString('fr-FR')} FCFA`
+        },
+        { 
+            header: 'Marge', 
+            accessor: 'costPrice',
+            render: (item: Product) => {
+                const margin = calculateProfitMargin(item.costPrice || 0, item.retailPrice);
+                return (
+                    <span className={getMarginColor(margin)}>
+                        {margin.toFixed(1)}%
+                    </span>
+                );
+            }
         },
         {
             header: 'Actions',
@@ -232,44 +267,40 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         }
     ] as any;
 
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-64">Chargement des produits...</div>;
+    if (isLoading || isSuppliersLoading) {
+        return (
+            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+                <div className="flex items-center space-x-4 p-6">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="font-semibold text-gray-800">Produits</p>
+                        <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Produits</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Produits - {business.name}</h1>
                 <Button onClick={() => handleOpenModal()}>Ajouter un Produit</Button>
             </div>
-
-            {/* Low stock alert */}
-            {products.some((p: any) => p.stock < 10) && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                    <div className="flex">
-                        <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                        <div className="ml-3">
-                            <p className="text-sm text-yellow-700">
-                                <span className="font-medium">Attention!</span> Certains produits ont un stock faible.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <Table 
-                    columns={columns} 
-                    data={products} 
-                />
-            </div>
-
-            {/* Add/Edit Product Modal */}
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingProduct ? "Modifier le Produit" : "Ajouter un Produit"}>
+            
+            <Table 
+                columns={columns} 
+                data={products} 
+            />
+            
+            <Modal 
+                isOpen={isModalOpen} 
+                onClose={handleCloseModal} 
+                title={editingProduct ? "Modifier le Produit" : "Ajouter un Produit"}
+            >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
@@ -283,6 +314,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             required
                         />
                     </div>
+                    
                     <div>
                         <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
                         <input
@@ -295,86 +327,77 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             required
                         />
                     </div>
-                    <div>
-                        <label htmlFor="supplierId" className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
-                        <select
-                            id="supplierId"
-                            name="supplierId"
-                            value={formData.supplierId ?? ''}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        >
-                            <option value="">Sélectionner un fournisseur (optionnel)</option>
-                            {suppliers.map((supplier: any) => (
-                                <option key={supplier.id} value={supplier.id}>
-                                    {supplier.name}
-                                </option>
-                            ))}
-                        </select>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                            <input
+                                type="number"
+                                id="stock"
+                                name="stock"
+                                value={formData.stock}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label htmlFor="minStock" className="block text-sm font-medium text-gray-700 mb-1">Stock Minimum</label>
+                            <input
+                                type="number"
+                                id="minStock"
+                                name="minStock"
+                                value={formData.minStock}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                min="0"
+                            />
+                            <p className="mt-1 text-sm text-gray-500">Alerte envoyée lorsque le stock descend en dessous de cette valeur</p>
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                        <input
-                            type="number"
-                            id="stock"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleChange}
-                            min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="retailPrice" className="block text-sm font-medium text-gray-700 mb-1">Prix Détail (FCFA)</label>
-                        <input
-                            type="number"
-                            id="retailPrice"
-                            name="retailPrice"
-                            value={formData.retailPrice}
-                            onChange={handleChange}
-                            min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="wholesalePrice" className="block text-sm font-medium text-gray-700 mb-1">Prix Gros (FCFA)</label>
-                        <input
-                            type="number"
-                            id="wholesalePrice"
-                            name="wholesalePrice"
-                            value={formData.wholesalePrice}
-                            onChange={handleChange}
-                            min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            required
-                        />
-                    </div>
-                    <div className="flex justify-end space-x-3 pt-4">
-                        <Button type="button" variant="secondary" onClick={handleCloseModal}>Annuler</Button>
-                        <Button type="submit" disabled={createProductMutation.isPending || updateProductMutation.isPending}>
-                            {createProductMutation.isPending || updateProductMutation.isPending ? 'Enregistrement...' : 
-                             editingProduct ? 'Mettre à Jour' : 'Ajouter'}
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Restock Modal */}
-            <Modal isOpen={isRestockModalOpen} onClose={handleCloseRestockModal} title={`Réapprovisionner ${restockingProduct?.name}`}>
-                <form onSubmit={handleRestockSubmit} className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                        <h3 className="text-lg font-medium text-blue-800 mb-2">Informations actuelles</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-blue-600">Stock actuel</p>
-                                <p className="font-medium">{restockingProduct?.stock} unités</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-blue-600">Coût unitaire actuel</p>
-                                <p className="font-medium">{restockingProduct?.wholesalePrice.toLocaleString('fr-FR')} FCFA</p>
-                            </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label htmlFor="costPrice" className="block text-sm font-medium text-gray-700 mb-1">Prix d'Achat (FCFA)</label>
+                            <input
+                                type="number"
+                                id="costPrice"
+                                name="costPrice"
+                                value={formData.costPrice}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label htmlFor="retailPrice" className="block text-sm font-medium text-gray-700 mb-1">Prix Détail (FCFA)</label>
+                            <input
+                                type="number"
+                                id="retailPrice"
+                                name="retailPrice"
+                                value={formData.retailPrice}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label htmlFor="wholesalePrice" className="block text-sm font-medium text-gray-700 mb-1">Prix Gros (FCFA)</label>
+                            <input
+                                type="number"
+                                id="wholesalePrice"
+                                name="wholesalePrice"
+                                value={formData.wholesalePrice}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                                min="0"
+                            />
                         </div>
                     </div>
                     
@@ -383,20 +406,33 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                         <select
                             id="supplierId"
                             name="supplierId"
-                            value={restockData.supplierId ?? ''}
-                            onChange={handleRestockChange}
+                            value={formData.supplierId || ''}
+                            onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
-                            <option value="">Sélectionner un fournisseur (optionnel)</option>
+                            <option value="">Sélectionner un fournisseur</option>
                             {suppliers.map((supplier: any) => (
-                                <option key={supplier.id} value={supplier.id}>
-                                    {supplier.name}
-                                </option>
+                                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                             ))}
                         </select>
-                        {restockData.supplierName && (
-                            <p className="mt-1 text-sm text-gray-500">Fournisseur sélectionné: {restockData.supplierName}</p>
-                        )}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button variant="secondary" onClick={handleCloseModal}>Annuler</Button>
+                        <Button type="submit">{editingProduct ? "Mettre à jour" : "Ajouter"}</Button>
+                    </div>
+                </form>
+            </Modal>
+            
+            <Modal 
+                isOpen={isRestockModalOpen} 
+                onClose={handleCloseRestockModal} 
+                title="Réapprovisionner le Produit"
+            >
+                <form onSubmit={handleRestockSubmit} className="space-y-4">
+                    <div className="mb-4">
+                        <h3 className="text-lg font-semibold">{restockingProduct?.name}</h3>
+                        <p className="text-gray-600">Stock actuel: {restockingProduct?.stock}</p>
                     </div>
                     
                     <div>
@@ -407,9 +443,9 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             name="quantity"
                             value={restockData.quantity}
                             onChange={handleRestockChange}
-                            min="1"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
+                            min="1"
                         />
                     </div>
                     
@@ -421,12 +457,11 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             name="unitCost"
                             value={restockData.unitCost}
                             onChange={handleRestockChange}
-                            min="0"
-                            step="1"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
+                            min="0"
+                            step="0.01"
                         />
-                        <p className="mt-1 text-sm text-gray-500">Coût d'achat par unité</p>
                     </div>
                     
                     <div>
@@ -437,36 +472,32 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             name="totalCost"
                             value={restockData.totalCost}
                             onChange={handleRestockChange}
-                            min="0"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
+                            min="0"
+                            step="0.01"
                         />
-                        <p className="mt-1 text-sm text-gray-500">Coût total du réapprovisionnement</p>
                     </div>
                     
-                    <div className="bg-green-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-medium text-green-800 mb-2">Résumé du réapprovisionnement</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-green-600">Nouveau stock total</p>
-                                <p className="font-medium">{(restockingProduct?.stock || 0) + restockData.quantity} unités</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-green-600">Nouveau coût unitaire moyen</p>
-                                <p className="font-medium">
-                                    {restockingProduct && restockData.quantity > 0 
-                                        ? Math.round(((restockingProduct.wholesalePrice * restockingProduct.stock) + restockData.totalCost) / (restockingProduct.stock + restockData.quantity)).toLocaleString('fr-FR')
-                                        : restockingProduct?.wholesalePrice.toLocaleString('fr-FR')} FCFA
-                                </p>
-                            </div>
-                        </div>
+                    <div>
+                        <label htmlFor="supplierId" className="block text-sm font-medium text-gray-700 mb-1">Fournisseur (optionnel)</label>
+                        <select
+                            id="supplierId"
+                            name="supplierId"
+                            value={restockData.supplierId || ''}
+                            onChange={handleRestockChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                            <option value="">Sélectionner un fournisseur</option>
+                            {suppliers.map((supplier: any) => (
+                                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                                ))}
+                        </select>
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">
-                        <Button type="button" variant="secondary" onClick={handleCloseRestockModal}>Annuler</Button>
-                        <Button type="submit" disabled={restockProductMutation.isPending || restockData.quantity <= 0 || restockData.totalCost <= 0}>
-                            {restockProductMutation.isPending ? 'Réapprovisionnement...' : 'Réapprovisionner'}
-                        </Button>
+                        <Button variant="secondary" onClick={handleCloseRestockModal}>Annuler</Button>
+                        <Button type="submit">Réapprovisionner</Button>
                     </div>
                 </form>
             </Modal>
