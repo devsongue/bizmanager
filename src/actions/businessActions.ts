@@ -173,7 +173,7 @@ export async function createBusiness(businessData: Omit<Business, 'id' | 'sales'
         city: businessData.city,
         currency: businessData.currency,
         logoUrl: businessData.logoUrl,
-        settings: businessData.settings,
+        settings: businessData.settings ? JSON.parse(JSON.stringify(businessData.settings)) : undefined,
       },
     });
     
@@ -196,7 +196,7 @@ export async function updateBusiness(id: string, businessData: Partial<Omit<Busi
         city: businessData.city,
         currency: businessData.currency,
         logoUrl: businessData.logoUrl,
-        settings: businessData.settings,
+        settings: businessData.settings ? JSON.parse(JSON.stringify(businessData.settings)) : undefined,
       },
     });
     

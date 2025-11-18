@@ -279,7 +279,9 @@ export const BusinessComparison: React.FC<BusinessComparisonProps> = ({ business
                     <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Plus de ventes</h5>
                     {(() => {
                       const mostSales = selectedBusinessObjects.reduce((best, current) => {
-                        return current.sales?.length > best.sales?.length ? current : best;
+                        const currentLength = current.sales?.length || 0;
+                        const bestLength = best.sales?.length || 0;
+                        return currentLength > bestLength ? current : best;
                       }, selectedBusinessObjects[0]);
                       
                       return (

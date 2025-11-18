@@ -10,13 +10,34 @@ interface AdvancedSettingsProps {
   onCancel: () => void;
 }
 
+// Define the settings interface for better type safety
+interface SettingsState {
+  taxRate: number;
+  invoicePrefix: string;
+  lowStockThreshold: number;
+  currencySymbol: string;
+  timezone: string;
+  notifications: {
+    lowStockThreshold: number;
+    salesTarget: number;
+    expenseAlertThreshold: number;
+    enableLowStockAlerts: boolean;
+    enableSalesTargetAlerts: boolean;
+    enableExpenseAlerts: boolean;
+  };
+  integrations: {
+    accounting: string;
+    payment: string;
+  };
+}
+
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ business, onSave, onCancel }) => {
   // États pour gérer les onglets
   const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'integrations'>('general');
   const [showIntegrationManager, setShowIntegrationManager] = useState(false);
   
   // Initialiser les paramètres à partir des paramètres existants de l'entreprise
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SettingsState>({
     taxRate: business.settings?.taxRate || 0,
     invoicePrefix: business.settings?.invoicePrefix || '',
     lowStockThreshold: business.settings?.lowStockThreshold || 10,
@@ -54,13 +75,20 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ business, on
     } else {
       if (name.includes('.')) {
         const [parent, child] = name.split('.');
-        setSettings(prev => ({
-          ...prev,
-          [parent]: {
-            ...prev[parent as keyof typeof prev],
-            [child]: value
+        setSettings(prev => {
+          // Ensure we're working with a valid object property
+          const parentObj = prev[parent as keyof SettingsState];
+          if (typeof parentObj === 'object' && parentObj !== null) {
+            return {
+              ...prev,
+              [parent]: {
+                ...(parentObj as Record<string, any>),
+                [child]: value
+              }
+            };
           }
-        }));
+          return prev;
+        });
       } else {
         setSettings(prev => ({
           ...prev,
@@ -75,7 +103,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ business, on
     onSave(settings);
   };
 
-  const handleNotificationSettingsSave = (notificationSettings: any) => {
+  const handleNotificationSettingsSave = (notificationSettings: Partial<SettingsState>) => {
     setSettings(prev => ({
       ...prev,
       ...notificationSettings

@@ -30,12 +30,12 @@ const formatCurrency = (amount: number): string => {
 
 export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ business }) => {
   // Calculate business statistics
-  const totalSales = business.sales.reduce((sum, sale) => sum + sale.total, 0);
-  const totalCOGS = calculateCOGS(business.sales, business.products);
-  const totalOperationalExpenses = calculateOperationalExpenses(business.expenses);
+  const totalSales = (business.sales || []).reduce((sum, sale) => sum + sale.total, 0);
+  const totalCOGS = calculateCOGS(business.sales || [], business.products || []);
+  const totalOperationalExpenses = calculateOperationalExpenses(business.expenses || []);
   const netProfit = totalSales - totalCOGS - totalOperationalExpenses;
-  const totalProducts = business.products.length;
-  const lowStockProducts = business.products.filter(p => p.stock < 10).length;
+  const totalProducts = (business.products || []).length;
+  const lowStockProducts = (business.products || []).filter(p => p.stock < 10).length;
 
   return (
     <div className="space-y-6">
@@ -81,16 +81,16 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ business }
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Clients</h3>
-            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{business.clients.length}</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{(business.clients || []).length}</p>
           </div>
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Fournisseurs</h3>
-            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{business.suppliers.length}</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{(business.suppliers || []).length}</p>
           </div>
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Produits en stock</h3>
             <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-              {business.products.reduce((sum, product) => sum + product.stock, 0)}
+              {(business.products || []).reduce((sum, product) => sum + product.stock, 0)}
             </p>
           </div>
         </div>

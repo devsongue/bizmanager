@@ -10,6 +10,33 @@ export type BusinessType = 'SHOP' | 'RESTAURANT' | 'PHARMACY' | 'SERVICE' | 'OTH
 export type NotificationType = 'LOW_STOCK' | 'SALES_TARGET' | 'EXPENSE_ALERT' | 'NEW_SALE' | 'NEW_EXPENSE';
 export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
+// Interface pour les paramètres de notification
+interface NotificationSettings {
+  lowStockThreshold?: number;
+  salesTarget?: number;
+  expenseAlertThreshold?: number;
+  enableLowStockAlerts?: boolean;
+  enableSalesTargetAlerts?: boolean;
+  enableExpenseAlerts?: boolean;
+}
+
+// Interface pour les paramètres d'intégration
+interface IntegrationSettings {
+  accounting?: string;
+  payment?: string;
+}
+
+// Interface pour les paramètres d'entreprise
+interface BusinessSettings {
+  taxRate?: number;
+  invoicePrefix?: string;
+  lowStockThreshold?: number;
+  currencySymbol?: string;
+  timezone?: string;
+  notifications?: NotificationSettings;
+  integrations?: IntegrationSettings;
+}
+
 export interface Sale {
   id: string;
   reference: string;
@@ -110,16 +137,25 @@ export interface Business {
   id: string;
   name: string;
   type: BusinessType;
-  country?: string | null;
+  description?: string | null;
+  address?: string | null;
   city?: string | null;
-  currency?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
   logoUrl?: string | null;
-  settings?: any | null;
-  sales: Sale[];
-  expenses: Expense[];
-  products: Product[];
-  clients: Client[];
-  suppliers: Supplier[];
+  currency?: string | null;
+  taxRate?: number | null;
+  timezone?: string | null;
+  language?: string | null;
+  dateFormat?: string | null;
+  settings?: BusinessSettings; // Ajout de la propriété settings
+  products?: Product[];
+  sales?: Sale[];
+  expenses?: Expense[];
+  clients?: Client[];
+  suppliers?: Supplier[];
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -136,6 +172,8 @@ export interface User {
   lastLogin?: string | null;
   permissions?: any | null;
   managedBusinessIds?: string[];
+  phone?: string | null;
+  address?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;

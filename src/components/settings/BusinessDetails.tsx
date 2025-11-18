@@ -5,8 +5,10 @@ import { formatCurrency } from '@/utils/formatters';
 import { AssignedEmployees } from './AssignedEmployees';
 import { ActivityHistory } from './ActivityHistory';
 import { AdvancedSettings } from './AdvancedSettings';
-import { Bell, BarChart } from 'lucide-react';
+import { Bell, BarChart, Users } from 'lucide-react';
 import { DetailedReports } from '../reports/DetailedReports';
+import { EmployeeManager } from '../employees/EmployeeManager';
+import { useUpdateUser } from '@/hooks/useUser';
 
 interface BusinessDetailsProps {
   business: Business;
@@ -31,6 +33,8 @@ export const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 }) => {
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [showEmployeeManager, setShowEmployeeManager] = useState(false);
+  const updateUserMutation = useUpdateUser();
   
   // Calculer les statistiques
   const totalSales = business.sales?.reduce((sum, sale) => sum + sale.total, 0) || 0;
@@ -45,6 +49,12 @@ export const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   const handleSaveSettings = async (settings: any) => {
     await onUpdateSettings(business.id, settings);
     setShowAdvancedSettings(false);
+  };
+
+  // Assigner un employé à l'entreprise
+  const handleAssignEmployee = async (employeeId: string) => {
+    // Cette fonction est gérée par le EmployeeManager
+    console.log(`Employé ${employeeId} assigné à l'entreprise ${business.id}`);
   };
 
   return (
@@ -85,6 +95,10 @@ export const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             <Button variant="secondary" onClick={() => setShowReports(true)}>
               <BarChart className="h-4 w-4 mr-2" />
               Rapports
+            </Button>
+            <Button variant="secondary" onClick={() => setShowEmployeeManager(true)}>
+              <Users className="h-4 w-4 mr-2" />
+              Employés
             </Button>
             <Button variant="secondary" onClick={() => setShowAdvancedSettings(true)}>
               Paramètres avancés
@@ -174,6 +188,11 @@ export const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           <AssignedEmployees 
             employees={assignedEmployees} 
             onRemove={onRemoveEmployee} 
+            onViewDetails={(employee) => {
+              // Pour l'instant, on affiche simplement un message
+              // Dans une vraie application, on pourrait ouvrir un modal avec les détails
+              alert(`Voir le profil de ${employee.name}`);
+            }}
           />
         </div>
         
@@ -207,6 +226,17 @@ export const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         <DetailedReports 
           business={business}
           onClose={() => setShowReports(false)}
+        />
+      )}
+      
+      {/* Gestionnaire d'employés */}
+      {showEmployeeManager && (
+        <EmployeeManager
+          businessId={business.id}
+          assignedEmployees={assignedEmployees}
+          onAssignEmployee={handleAssignEmployee}
+          onRemoveEmployee={onRemoveEmployee}
+          onClose={() => setShowEmployeeManager(false)}
         />
       )}
     </div>

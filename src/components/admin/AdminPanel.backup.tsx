@@ -254,13 +254,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
         let allSales: Sale[] = [];
 
         if (selectedBusiness) {
-            allSales = filterSalesByPeriod(selectedBusiness.sales || []);
+            allSales = filterSalesByPeriod(selectedBusiness.sales ?? []);
         } else {
             allSales = displayedBusinesses.flatMap((business: any) =>
-                filterSalesByPeriod(business.sales || []).map((sale: any) => ({
+                (filterSalesByPeriod(business.sales || []).map((sale: any) => ({
                     ...sale,
                     businessName: business.name
-                }))
+                })) as Sale[])
             );
         }
 
@@ -271,17 +271,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
     const getTopPerformingBusinesses = (): any[] => {
         return [...displayedBusinesses]
             .map((business: any) => {
-                const totalRevenue = calculateTotalSalesRevenue(business.sales || []);
-                const totalExpenses = calculateTotalExpenses(business.expenses || []);
-                const cogs = calculateCOGS(business.sales || [], business.products || []);
-                const grossProfit = calculateGrossProfit(business.sales || [], business.expenses || [], business.products || []);
-                const operatingProfit = calculateOperatingProfit(business.sales || [], business.expenses || [], business.products || []);
-                const netProfit = calculateNetProfit(business.sales || [], business.expenses || [], business.products || []);
-                const ebitda = calculateEBITDA(business.sales || [], business.expenses || [], business.products || []);
-                const grossProfitMargin = calculateGrossProfitMargin(business.sales || [], business.products || []);
-                const operatingProfitMargin = calculateOperatingProfitMargin(business.sales || [], business.expenses || [], business.products || []);
-                const netProfitMargin = calculateNetProfitMargin(business.sales || [], business.expenses || [], business.products || []);
-                const roi = calculateROI(business.sales || [], business.expenses || [], business.products || []);
+                const sales = business.sales || [];
+                const expenses = business.expenses || [];
+                const products = business.products || [];
+                
+                const totalRevenue = calculateTotalSalesRevenue(sales);
+                const totalExpenses = calculateTotalExpenses(expenses);
+                const cogs = calculateCOGS(sales, products);
+                const grossProfit = calculateGrossProfit(sales, expenses, products);
+                const operatingProfit = calculateOperatingProfit(sales, expenses, products);
+                const netProfit = calculateNetProfit(sales, expenses, products);
+                const ebitda = calculateEBITDA(sales, expenses, products);
+                const grossProfitMargin = calculateGrossProfitMargin(sales, products);
+                const operatingProfitMargin = calculateOperatingProfitMargin(sales, expenses, products);
+                const netProfitMargin = calculateNetProfitMargin(sales, expenses, products);
+                const roi = calculateROI(sales, expenses, products);
 
                 return {
                     ...business,
@@ -305,21 +309,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
     // Get business performance metrics with enhanced calculations
     const getBusinessPerformanceMetrics = () => {
         const businessesWithMetrics = displayedBusinesses.map((business: any) => {
-            const totalRevenue = calculateTotalSalesRevenue(business.sales || []);
-            const totalExpenses = calculateTotalExpenses(business.expenses || []);
-            const operatingExpenses = calculateOperatingExpenses(business.expenses || []);
-            const oneTimeExpenses = calculateOneTimeExpenses(business.expenses || []);
-            const cogs = calculateCOGS(business.sales || [], business.products || []);
-            const grossProfit = calculateGrossProfit(business.sales || [], business.expenses || [], business.products || []);
-            const operatingProfit = calculateOperatingProfit(business.sales || [], business.expenses || [], business.products || []);
-            const netProfit = calculateNetProfit(business.sales || [], business.expenses || [], business.products || []);
-            const ebitda = calculateEBITDA(business.sales || [], business.expenses || [], business.products || []);
-            const grossProfitMargin = calculateGrossProfitMargin(business.sales || [], business.products || []);
-            const operatingProfitMargin = calculateOperatingProfitMargin(business.sales || [], business.expenses || [], business.products || []);
-            const netProfitMargin = calculateNetProfitMargin(business.sales || [], business.expenses || [], business.products || []);
-            const roi = calculateROI(business.sales || [], business.expenses || [], business.products || []);
-            const inventoryValue = calculateTotalProductValue(business.products || []);
-            const expenseBreakdown = calculateExpenseBreakdown(business.expenses || []);
+            const sales = business.sales || [];
+            const expenses = business.expenses || [];
+            const products = business.products || [];
+            
+            const totalRevenue = calculateTotalSalesRevenue(sales);
+            const totalExpenses = calculateTotalExpenses(expenses);
+            const operatingExpenses = calculateOperatingExpenses(expenses);
+            const oneTimeExpenses = calculateOneTimeExpenses(expenses);
+            const cogs = calculateCOGS(sales, products);
+            const grossProfit = calculateGrossProfit(sales, expenses, products);
+            const operatingProfit = calculateOperatingProfit(sales, expenses, products);
+            const netProfit = calculateNetProfit(sales, expenses, products);
+            const ebitda = calculateEBITDA(sales, expenses, products);
+            const grossProfitMargin = calculateGrossProfitMargin(sales, products);
+            const operatingProfitMargin = calculateOperatingProfitMargin(sales, expenses, products);
+            const netProfitMargin = calculateNetProfitMargin(sales, expenses, products);
+            const roi = calculateROI(sales, expenses, products);
+            const inventoryValue = calculateTotalProductValue(products);
+            const expenseBreakdown = calculateExpenseBreakdown(expenses);
 
             return {
                 business,
@@ -397,8 +405,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
                         <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                             {totalRevenue > 0 ? formatPercentage(calculateGrossProfitMargin(
-                                displayedBusinesses.flatMap((b: any) => b.sales || []),
-                                displayedBusinesses.flatMap((b: any) => b.products || [])
+                                displayedBusinesses.flatMap((b: any) => b.sales || []).flat(),
+                                displayedBusinesses.flatMap((b: any) => b.products || []).flat()
                             )) : '0.00%'}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Revenus - Coût des marchandises vendues</p>
@@ -407,9 +415,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge d'Exploitation</h3>
                         <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {totalRevenue > 0 ? formatPercentage(calculateOperatingProfitMargin(
-                                displayedBusinesses.flatMap((b: any) => b.sales || []),
-                                displayedBusinesses.flatMap((b: any) => b.expenses || []),
-                                displayedBusinesses.flatMap((b: any) => b.products || [])
+                                displayedBusinesses.flatMap((b: any) => b.sales || []).flat(),
+                                displayedBusinesses.flatMap((b: any) => b.expenses || []).flat(),
+                                displayedBusinesses.flatMap((b: any) => b.products || []).flat()
                             )) : '0.00%'}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bénéfice après dépenses opérationnelles</p>
@@ -672,7 +680,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Coût des Marchandises Vendues</h3>
                         <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateCOGS(business.sales || [], business.products || []), 0))}
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateCOGS(business.sales, business.products), 0))}
                         </p>
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -726,7 +734,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
             </div>
 
             {/* Business Financial Summary */}
-            <div className="bg-white dark:bg-gray-880 rounded-xl shadow-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Résumé Financier par Entreprise</h2>
                     <div className="flex items-center space-x-2">
@@ -761,22 +769,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {(selectedBusiness ? [selectedBusiness] : displayedBusinesses).map((business: any) => {
-                                const businessSalesRevenue = calculateTotalSalesRevenue(business.sales || []);
-                                const businessExpensesAmount = calculateTotalExpenses(business.expenses || []);
-                                const businessProductValue = calculateTotalProductValue(business.products || []);
+                                const businessSalesRevenue = calculateTotalSalesRevenue(business.sales);
+                                const businessExpensesAmount = calculateTotalExpenses(business.expenses);
+                                const businessProductValue = calculateTotalProductValue(business.products);
                                 const businessProfit = businessSalesRevenue - businessExpensesAmount;
 
                                 return (
                                     <tr key={business.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{business.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{business.sales?.length || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{business.sales.length}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{formatCurrency(businessSalesRevenue)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{formatCurrency(calculateCOGS(business.sales || [], business.products || []))}</td>
-                                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${calculateGrossProfit(business.sales || [], business.expenses || [], business.products || []) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {formatCurrency(calculateGrossProfit(business.sales || [], business.expenses || [], business.products || []))}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{formatCurrency(calculateCOGS(business.sales, business.products))}</td>
+                                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${calculateGrossProfit(business.sales, business.expenses, business.products) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(calculateGrossProfit(business.sales, business.expenses, business.products))}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{formatCurrency(calculateOperatingExpenses(business.expenses || []))}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">{formatCurrency(calculateOneTimeExpenses(business.expenses || []))}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{formatCurrency(calculateOperatingExpenses(business.expenses))}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">{formatCurrency(calculateOneTimeExpenses(business.expenses))}</td>
                                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${businessProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             {formatCurrency(businessProfit)}
                                         </td>
@@ -817,7 +825,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                     {(() => {
                         const expenseData = Object.entries(
                             displayedBusinesses.reduce((acc: Record<string, number>, business: any) => {
-                                const breakdown = calculateExpenseBreakdown(business.expenses || []);
+                                const breakdown = calculateExpenseBreakdown(business.expenses);
                                 Object.entries(breakdown).forEach(([category, amount]) => {
                                     acc[category] = (acc[category] || 0) + amount;
                                 });
@@ -938,4 +946,4 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
             )}
         </div>
     );
-};
+}
