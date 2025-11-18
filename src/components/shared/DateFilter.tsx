@@ -40,6 +40,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({ onDateRangeChange, class
             >
                 <option value={DATE_FILTERS.CUSTOM}>Personnalisé</option>
                 <option value={DATE_FILTERS.TODAY}>Aujourd'hui</option>
+                <option value={DATE_FILTERS.THIS_WEEK}>Cette semaine</option>
                 <option value={DATE_FILTERS.LAST_7_DAYS}>7 derniers jours</option>
                 <option value={DATE_FILTERS.LAST_30_DAYS}>30 derniers jours</option>
                 <option value={DATE_FILTERS.LAST_90_DAYS}>90 derniers jours</option>

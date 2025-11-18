@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import type { Business, Sale, Expense } from '../../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Sector } from 'recharts';
 import { DateFilter } from '../shared';
@@ -30,10 +30,23 @@ const processMonthlyData = (sales: Sale[], expenses: Expense[]) => {
     processItems(sales, 'ventes');
     processItems(expenses, 'depenses');
 
-    return Object.values(data).sort((a,b) => {
-        const [aMonth, aYear] = a.name.split(" '");
-        const [bMonth, bYear] = b.name.split(" '");
-        return new Date(`${aMonth} 1, 20${aYear}`).getTime() - new Date(`${bMonth} 1, 20${bYear}`).getTime();
+    // Trier les données par ordre chronologique
+    return Object.values(data).sort((a, b) => {
+        // Extraire l'année et le mois des noms de périodes
+        const [aMonthName, aYear] = a.name.split(" '");
+        const [bMonthName, bYear] = b.name.split(" '");
+        
+        // Convertir les noms de mois en indices
+        const monthIndex = (monthName: string) => monthNames.indexOf(monthName);
+        
+        const aMonth = monthIndex(aMonthName);
+        const bMonth = monthIndex(bMonthName);
+        
+        // Comparer d'abord par année, puis par mois
+        if (aYear !== bYear) {
+            return parseInt(aYear) - parseInt(bYear);
+        }
+        return aMonth - bMonth;
     });
 };
 
@@ -211,17 +224,21 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
             return { sales: businessData.sales, expenses: businessData.expenses };
         }
         
-        // Add 1 day to end date to make it inclusive
-        endDate.setDate(endDate.getDate() + 1);
+        // Ajuster les dates pour inclure les extrémités
+        // Définir l'heure de début à 00:00:00
+        startDate.setHours(0, 0, 0, 0);
+        // Définir l'heure de fin à 23:59:59 pour inclure toute la journée
+        const adjustedEndDate = new Date(endDate);
+        adjustedEndDate.setHours(23, 59, 59, 999);
 
         const sales = businessData.sales.filter(s => {
             const saleDate = new Date(s.date);
-            return saleDate >= startDate && saleDate <= endDate;
+            return saleDate >= startDate && saleDate <= adjustedEndDate;
         });
 
         const expenses = businessData.expenses.filter(e => {
             const expDate = new Date(e.date);
-            return expDate >= startDate && expDate <= endDate;
+            return expDate >= startDate && expDate <= adjustedEndDate;
         });
 
         return { sales, expenses };
@@ -253,7 +270,20 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
             monthlySales[monthKey].totalRevenue += sale.total || 0;
         });
         
-        return Object.values(monthlySales);
+        // Convertir en tableau et trier par date
+        return Object.values(monthlySales).sort((a, b) => {
+            // Extraire les informations de date des noms de mois
+            const parseMonthYear = (monthStr: string) => {
+                const parts = monthStr.split(' ');
+                const month = parts[0];
+                const year = parts[1];
+                const monthIndex = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+                    .indexOf(month);
+                return new Date(parseInt(year), monthIndex);
+            };
+            
+            return parseMonthYear(a.month).getTime() - parseMonthYear(b.month).getTime();
+        });
     }, [filteredData.sales]);
 
     const expenseByCategory = useMemo(() => {
@@ -355,10 +385,13 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
         return (totalRevenue || 0) - (totalExpenses || 0);
     }, [totalRevenue, totalExpenses]);
 
-    const handleDateRangeChange = (start: string, end: string) => {
-        setDateRange({ start, end });
-    };
-
+    const handleDateRangeChange = useCallback((start: string, end: string) => {
+        // S'assurer que les dates sont au bon format
+        const formattedStart = start ? new Date(start).toISOString().split('T')[0] : '';
+        const formattedEnd = end ? new Date(end).toISOString().split('T')[0] : '';
+        setDateRange({ start: formattedStart, end: formattedEnd });
+    }, []);
+    
     const onPieEnter = (_: any, index: number) => {
         setActiveIndex(index);
     };

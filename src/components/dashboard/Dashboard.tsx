@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import type { Business, Product } from '@/types';
 import { StatCard } from './StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -133,9 +133,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ business }) => {
 
     const monthlyChartData = useMemo(() => processMonthlyData(filteredData.sales || [], filteredData.expenses || []), [filteredData.sales?.length, filteredData.expenses?.length]);
     
-    const handleDateRangeChange = (start: string, end: string) => {
+    const handleDateRangeChange = useCallback((start: string, end: string) => {
         setDateRange({ start, end });
-    };
+    }, []);
     
     // Add safety checks for rendering
     if (!business) {

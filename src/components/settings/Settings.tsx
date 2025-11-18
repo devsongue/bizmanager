@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { Business, BusinessType } from '@/types';
+import type { Business, BusinessType, User } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { Table } from '../shared/Table';
 import { useBusinesses, useCreateBusiness, useUpdateBusiness, useDeleteBusiness } from '@/hooks/useBusiness';
+import { useUsers } from '@/hooks/useUser'; // Ajout de l'import pour useUsers
 import { Edit, Eye, Trash2 } from 'lucide-react';
 
 interface SettingsProps {
@@ -28,14 +29,22 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
         name: '',
         type: 'SHOP' as BusinessType
     });
+    
+    // État pour gérer les employés assignés à l'entreprise
+    const [assignedEmployeeIds, setAssignedEmployeeIds] = useState<string[]>([]);
 
     // État pour la recherche d'entreprises
     const [searchTerm, setSearchTerm] = useState('');
 
-    const { data: fetchedBusinesses = [], isLoading } = useBusinesses();
+    const { data: fetchedBusinesses = [], isLoading: isBusinessesLoading } = useBusinesses();
+    const { data: fetchedUsers = [], isLoading: isUsersLoading } = useUsers(); // Récupération des utilisateurs
     const createBusinessMutation = useCreateBusiness();
     const updateBusinessMutation = useUpdateBusiness();
     const deleteBusinessMutation = useDeleteBusiness();
+
+    // Utiliser les données récupérées ou les props
+    const displayedBusinesses = fetchedBusinesses.length > 0 ? fetchedBusinesses : businesses;
+    const allUsers = fetchedUsers.length > 0 ? fetchedUsers : [];
 
     const handleOpenModal = (business?: Business) => {
         if (business) {
@@ -45,10 +54,17 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                 name: business.name,
                 type: business.type
             });
+            
+            // Initialiser les employés assignés
+            const employeeIds = allUsers
+                .filter(user => user.managedBusinessIds?.includes(business.id))
+                .map(user => user.id);
+            setAssignedEmployeeIds(employeeIds);
         } else {
             setIsEditing(false);
             setCurrentBusiness(null);
             setFormData({ name: '', type: 'SHOP' as BusinessType });
+            setAssignedEmployeeIds([]);
         }
         setIsModalOpen(true);
     };
@@ -57,6 +73,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
         setIsModalOpen(false);
         setIsEditing(false);
         setCurrentBusiness(null);
+        setAssignedEmployeeIds([]);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -65,6 +82,15 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
             ...prev,
             [name]: value
         }));
+    };
+
+    // Gérer le changement d'assignation d'un employé
+    const handleEmployeeAssignmentChange = (employeeId: string, checked: boolean) => {
+        if (checked) {
+            setAssignedEmployeeIds(prev => [...prev, employeeId]);
+        } else {
+            setAssignedEmployeeIds(prev => prev.filter(id => id !== employeeId));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -77,6 +103,9 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                     id: currentBusiness.id,
                     data: formData
                 });
+                
+                // Mettre à jour les assignations des employés
+                await updateEmployeeAssignments(currentBusiness.id, assignedEmployeeIds);
             } else {
                 // Create new business
                 await createBusinessMutation.mutateAsync(formData);
@@ -85,6 +114,37 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
             handleCloseModal();
         } catch (error) {
             console.error('Error saving business:', error);
+        }
+    };
+
+    // Fonction pour mettre à jour les assignations des employés
+    const updateEmployeeAssignments = async (businessId: string, assignedIds: string[]) => {
+        try {
+            // Pour chaque utilisateur, mettre à jour ses managedBusinessIds
+            for (const user of allUsers) {
+                const currentlyAssigned = user.managedBusinessIds?.includes(businessId) || false;
+                const shouldBeAssigned = assignedIds.includes(user.id);
+                
+                // Si l'état d'assignation a changé, mettre à jour l'utilisateur
+                if (currentlyAssigned !== shouldBeAssigned) {
+                    let newManagedBusinessIds = user.managedBusinessIds || [];
+                    
+                    if (shouldBeAssigned) {
+                        // Ajouter l'entreprise aux managedBusinessIds
+                        newManagedBusinessIds = [...newManagedBusinessIds, businessId];
+                    } else {
+                        // Retirer l'entreprise des managedBusinessIds
+                        newManagedBusinessIds = newManagedBusinessIds.filter(id => id !== businessId);
+                    }
+                    
+                    // Appeler l'action de mise à jour de l'utilisateur
+                    // Note: Dans une implémentation complète, vous auriez besoin d'une action côté serveur
+                    // pour mettre à jour les managedBusinessIds de l'utilisateur
+                    console.log(`Updating user ${user.id} with managedBusinessIds:`, newManagedBusinessIds);
+                }
+            }
+        } catch (error) {
+            console.error('Error updating employee assignments:', error);
         }
     };
 
@@ -190,7 +250,7 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
         }
     ];
 
-    if (isLoading) {
+    if (isBusinessesLoading || isUsersLoading) {
         return (
             <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
                 <div className="flex items-center space-x-4 p-6">
@@ -206,9 +266,6 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
             </div>
         );
     }
-
-    // Use fetched businesses if available, otherwise use the prop businesses
-    const displayedBusinesses = fetchedBusinesses.length > 0 ? fetchedBusinesses : businesses;
 
     // Filtrer les entreprises en fonction du terme de recherche
     const filteredBusinesses = displayedBusinesses.filter(business =>
@@ -308,6 +365,36 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
                             <option value="OTHER">Autre</option>
                         </select>
                     </div>
+                    
+                    {/* Section pour assigner des employés à l'entreprise */}
+                    {isEditing && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assigner des Employés</label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md">
+                                {allUsers
+                                    .filter(user => user.role === 'MANAGER') // Ne montrer que les managers
+                                    .map(user => (
+                                        <div key={user.id} className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id={`employee-${user.id}`}
+                                                checked={assignedEmployeeIds.includes(user.id)}
+                                                onChange={(e) => handleEmployeeAssignmentChange(user.id, e.target.checked)}
+                                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor={`employee-${user.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                                {user.name} ({user.email})
+                                            </label>
+                                        </div>
+                                    ))
+                                }
+                                {allUsers.filter(user => user.role === 'MANAGER').length === 0 && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Aucun employé disponible à assigner</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex justify-end space-x-3 pt-4">
                         <Button type="button" variant="secondary" onClick={handleCloseModal}>Annuler</Button>
                         <Button
