@@ -16,7 +16,7 @@ const AlertsDropdown: React.FC<{ products: Product[] }> = ({ products }) => (
         <div className="p-4 font-bold border-b border-gray-200 dark:border-gray-700">Alertes de Stock Faible</div>
         <ul className="py-2 max-h-64 overflow-y-auto">
             {products.length > 0 ? products.map((p: any) => (
-                <li key={p.id} className="flex justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                <li key={p.id} className="flex justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     <span>{p.name}</span>
                     <span className="font-bold text-red-600">Stock: {p.stock}</span>
                 </li>
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                 {/* Theme Toggle */}
                 <button 
                     onClick={toggleTheme}
-                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800"
                     aria-label="Toggle theme"
                 >
                     {theme === 'light' ? (
@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                                 <option key={b.id} value={b.id}>{b.name}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-3300">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                         </div>
                     </div>
@@ -104,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
 
                 {/* Alerts */}
                 <div className="relative">
-                    <button onClick={() => setAlertsOpen(!alertsOpen)} className="relative p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                    <button onClick={() => setAlertsOpen(!alertsOpen)} className="relative p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-offset-gray-800">
                         <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                         {totalLowStockProducts > 0 && (
                             <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 animate-ping"></span>
@@ -127,8 +127,8 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                     </button>
                     {userDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-xl z-20">
-                             <a href="#" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white">Profil</a>
-                            <a href="#" onClick={handleLogout} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white">Déconnexion</a>
+                             <a href="#" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white dark:hover:bg-primary-600">Profil</a>
+                            <a href="#" onClick={handleLogout} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white dark:hover:bg-primary-600">Déconnexion</a>
                         </div>
                     )}
                 </div>

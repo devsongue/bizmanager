@@ -37,10 +37,10 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon }
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg flex items-center justify-between transition-transform transform hover:-translate-y-1">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center justify-between transition-transform transform hover:-translate-y-1">
             <div>
-                <p className="text-sm text-gray-500 font-medium">{title}</p>
-                <p className="text-3xl font-bold text-gray-800">{value}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-white">{value}</p>
                 <p className={`text-xs ${changeColor} flex items-center`}>
                     {isPositive ? (
                         <TrendingUp className="w-4 h-4 mr-1" />

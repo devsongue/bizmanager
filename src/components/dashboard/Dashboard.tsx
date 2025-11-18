@@ -17,16 +17,16 @@ const LowStockAlerts: React.FC<{ products: Product[] }> = ({ products }) => {
     const sortedProducts = [...products].sort((a, b) => a.stock - b.stock);
     
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg mt-8">
-            <h3 className="text-xl font-bold text-yellow-600 mb-4 flex items-center">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg mt-8">
+            <h3 className="text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center">
                 <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 Alertes de Stock Faible
             </h3>
             <ul className="space-y-3">
                 {sortedProducts.map((product: any) => (
-                    <li key={product.id} className="flex justify-between items-center text-sm p-2 bg-red-50 rounded">
-                        <p className="font-semibold text-gray-700">{product.name}</p>
-                        <p className="font-bold text-red-600">Stock restant : {product.stock}</p>
+                    <li key={product.id} className="flex justify-between items-center text-sm p-2 bg-red-50 dark:bg-red-900/30 rounded">
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{product.name}</p>
+                        <p className="font-bold text-red-600 dark:text-red-400">Stock restant : {product.stock}</p>
                     </li>
                 ))}
             </ul>
@@ -150,9 +150,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ business }) => {
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">Tableau de Bord - {business.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Tableau de Bord - {business.name}</h1>
                 
-                <div className="bg-white p-3 rounded-lg shadow-md w-full md:w-auto">
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-md w-full md:w-auto">
                     <DateFilter onDateRangeChange={handleDateRangeChange} />
                 </div>
             </div>
@@ -165,8 +165,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ business }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Aperçu Mensuel</h3>
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Aperçu Mensuel</h3>
                     {monthlyChartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={monthlyChartData}>
@@ -187,28 +187,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ business }) => {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-64 text-gray-500">
+                        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
                             Aucune donnée disponible pour la période sélectionnée
                         </div>
                     )}
                 </div>
                 <div className="flex flex-col space-y-8">
-                    <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Ventes Récentes</h3>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Ventes Récentes</h3>
                         {recentSales.length > 0 ? (
                             <ul className="space-y-4">
                                 {recentSales.map(sale => (
-                                    <li key={sale.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                                    <li key={sale.id} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                         <div>
-                                            <p className="font-semibold text-gray-700">{sale.clientName}</p>
-                                            <p className="text-sm text-gray-500">{sale.productName}</p>
+                                            <p className="font-semibold text-gray-700 dark:text-gray-300">{sale.clientName}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{sale.productName}</p>
                                         </div>
-                                        <p className="font-bold text-primary-600">{sale.total.toLocaleString('fr-FR')} FCFA</p>
+                                        <p className="font-bold text-primary-600 dark:text-primary-400">{sale.total.toLocaleString('fr-FR')} FCFA</p>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 Aucune vente récente
                             </div>
                         )}

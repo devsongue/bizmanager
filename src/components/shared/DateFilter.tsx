@@ -36,7 +36,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({ onDateRangeChange, class
             <select 
                 value={selectedFilter}
                 onChange={handleFilterChange}
-                className="border border-gray-300 rounded p-2 text-sm"
+                className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
             >
                 <option value={DATE_FILTERS.CUSTOM}>Personnalisé</option>
                 <option value={DATE_FILTERS.TODAY}>Aujourd'hui</option>
@@ -54,14 +54,14 @@ export const DateFilter: React.FC<DateFilterProps> = ({ onDateRangeChange, class
                         type="date" 
                         value={customDateRange.start}
                         onChange={e => handleCustomDateChange('start', e.target.value)}
-                        className="border border-gray-300 rounded p-2 text-sm"
+                        className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                     />
-                    <span className="text-sm">au</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">au</span>
                     <input 
                         type="date" 
                         value={customDateRange.end}
                         onChange={e => handleCustomDateChange('end', e.target.value)}
-                        className="border border-gray-300 rounded p-2 text-sm"
+                        className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                     />
                 </>
             )}

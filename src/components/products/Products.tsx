@@ -326,8 +326,8 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                         <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
                     </div>
                     <div className="space-y-2">
-                        <p className="font-semibold text-gray-800">Produits</p>
-                        <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+                        <p className="font-semibold text-gray-800 dark:text-white">Produits</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">Chargement en cours...</p>
                     </div>
                 </div>
             </div>
