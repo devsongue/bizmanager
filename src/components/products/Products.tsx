@@ -46,9 +46,13 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
     // États pour la pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10); // Nombre d'éléments par page
+    
+    // État pour la recherche
+    const [searchTerm, setSearchTerm] = useState('');
 
     const { currentUser } = useAuth();
     
+    // Déplacer tous les hooks avant les conditions
     // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
     const businessId = useMemo(() => business.id, [business.id]);
     
@@ -59,7 +63,48 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
     const deleteProductMutation = useDeleteProduct();
     const restockProductMutation = useRestockProduct();
     
-
+    // Déplacer les hooks useMemo après tous les hooks de données
+    // Filtrer les produits en fonction du terme de recherche
+    const filteredProducts = useMemo(() => {
+        if (!searchTerm) return products;
+        
+        const term = searchTerm.toLowerCase().trim();
+        return products.filter(product => 
+            product?.name?.toLowerCase().includes(term) ||
+            product?.category?.toLowerCase().includes(term) ||
+            product?.id?.toLowerCase().includes(term)
+        );
+    }, [products, searchTerm]);
+    
+    // Recalculer les produits paginés en fonction des produits filtrés
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredProducts.slice(startIndex, endIndex);
+    }, [filteredProducts, currentPage, itemsPerPage]);
+    
+    // Recalculer le nombre total de pages en fonction des produits filtrés
+    const totalPages = useMemo(() => {
+        return Math.ceil(filteredProducts.length / itemsPerPage);
+    }, [filteredProducts.length, itemsPerPage]);
+    
+    // Maintenant on peut utiliser les conditions
+    if (isLoading || isSuppliersLoading) {
+        return (
+            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+                <div className="flex items-center space-x-4 p-6">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="font-semibold text-gray-800 dark:text-white">Produits</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">Chargement en cours...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     
     // Fonction pour changer de page
     const goToPage = (page: number) => {
@@ -342,50 +387,6 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         }
     ] as any;
 
-    if (isLoading || isSuppliersLoading) {
-        return (
-            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
-                <div className="flex items-center space-x-4 p-6">
-                    <div className="relative">
-                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
-                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-                    </div>
-                    <div className="space-y-2">
-                        <p className="font-semibold text-gray-800 dark:text-white">Produits</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">Chargement en cours...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // État pour la recherche
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    // Filtrer les produits en fonction du terme de recherche
-    const filteredProducts = useMemo(() => {
-        if (!searchTerm) return products;
-        
-        const term = searchTerm.toLowerCase().trim();
-        return products.filter(product => 
-            product.name.toLowerCase().includes(term) ||
-            product.category.toLowerCase().includes(term) ||
-            product.id.toLowerCase().includes(term)
-        );
-    }, [products, searchTerm]);
-    
-    // Recalculer les produits paginés en fonction des produits filtrés
-    const paginatedProducts = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filteredProducts.slice(startIndex, endIndex);
-    }, [filteredProducts, currentPage, itemsPerPage]);
-    
-    // Recalculer le nombre total de pages en fonction des produits filtrés
-    const totalPages = useMemo(() => {
-        return Math.ceil(filteredProducts.length / itemsPerPage);
-    }, [filteredProducts.length, itemsPerPage]);
-    
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -682,7 +683,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
             
             <Modal 
                 isOpen={isDeleteModalOpen} 
-                onClose={handleCloseDeleteModal} 
+                onClose={handleCloseDeleteModal}    
                 title="Confirmer la suppression"
             >
                 <div className="space-y-4">
