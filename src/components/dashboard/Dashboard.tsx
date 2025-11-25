@@ -209,14 +209,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ business }) => {
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
                         <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Ventes Récentes</h3>
                         {recentSales.length > 0 ? (
-                            <ul className="space-y-4">
+                            <ul className="space-y-2">
                                 {recentSales.map(sale => (
                                     <li key={sale.id} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                         <div>
-                                            <p className="font-semibold text-gray-700 dark:text-gray-300">{sale.clientName}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{sale.productName}</p>
+                                            <p className="font-semibold text-xs text-gray-700 dark:text-gray-300">{sale.clientName}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{sale.productName}</p>
                                         </div>
-                                        <p className="font-bold text-primary-600 dark:text-primary-400">{sale.total.toLocaleString('fr-FR')} FCFA</p>
+                                        <p className="font-bold text-xs text-primary-600 dark:text-primary-400">{sale.total.toLocaleString('fr-FR')} FCFA</p>
                                     </li>
                                 ))}
                             </ul>
