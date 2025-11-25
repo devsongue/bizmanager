@@ -69,3 +69,33 @@ export async function deleteClient(id: string) {
     return { success: false, error: 'Failed to delete client' };
   }
 }
+
+// Recalculate client balance based on sales and payments
+export async function recalculateClientBalance(clientId: string) {
+  try {
+    // Get all sales for this client
+    const sales = await prisma.sale.findMany({
+      where: { clientId: clientId },
+    });
+
+    // Calculate total sales amount
+    const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
+
+    // In a more advanced system, you would also factor in separate payment records
+    // For now, we'll assume all sales contribute to the balance (as debts)
+    
+    // Update client balance
+    const updatedClient = await prisma.client.update({
+      where: { id: clientId },
+      data: {
+        balance: totalSales,
+        lastPurchaseDate: sales.length > 0 ? new Date() : undefined
+      },
+    });
+
+    return { success: true, data: updatedClient };
+  } catch (error) {
+    console.error('Error recalculating client balance:', error);
+    return { success: false, error: 'Failed to recalculate client balance' };
+  }
+}

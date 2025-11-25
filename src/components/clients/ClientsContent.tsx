@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ClientsRefactored } from '@/components/clients/ClientsRefactored';
-import { useCreateClient, useUpdateClient } from '@/hooks/useClient';
+import { useCreateClient, useUpdateClient, useDeleteClient, useRecalculateClientBalance } from '@/hooks/useClient';
 import { getClients } from '@/actions/clientActions';
 import { useActiveBusiness } from '@/contexts/ActiveBusinessContext';
 import type { Business } from '@/types';
@@ -14,6 +14,7 @@ interface ClientsContentProps {
 export const ClientsContent: React.FC<ClientsContentProps> = ({ activeBusiness }) => {
   const { mutateAsync: createClient } = useCreateClient();
   const { mutateAsync: updateClient } = useUpdateClient();
+  const { mutateAsync: recalculateClientBalance } = useRecalculateClientBalance();
   
   // Use context if no prop is provided (for backward compatibility)
   const { activeBusiness: contextBusiness } = useActiveBusiness();
@@ -45,6 +46,9 @@ export const ClientsContent: React.FC<ClientsContentProps> = ({ activeBusiness }
               balance: client.balance - amount 
             } 
           });
+          
+          // Recalculate client balance to ensure accuracy
+          await recalculateClientBalance(clientId);
         }
       }
     } catch (error) {

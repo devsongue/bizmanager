@@ -3,7 +3,8 @@ import {
   getClients, 
   createClient, 
   updateClient, 
-  deleteClient 
+  deleteClient,
+  recalculateClientBalance
 } from '@/actions/clientActions';
 import { Client } from '@/types';
 
@@ -48,6 +49,18 @@ export const useDeleteClient = () => {
   
   return useMutation({
     mutationFn: deleteClient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+};
+
+// Hook for recalculating client balance
+export const useRecalculateClientBalance = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: recalculateClientBalance,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
     },

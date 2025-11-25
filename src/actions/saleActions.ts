@@ -3,12 +3,14 @@
 import { prisma } from '@/lib/prisma';
 import { Sale } from '@/types';
 import { headers } from 'next/headers';
+import { recalculateClientBalance } from './clientActions';
 
 // Fetch sales for a business
 export async function getSales(businessId: string) {
   try {
     const sales = await prisma.sale.findMany({
       where: { businessId },
+      orderBy: { date: 'desc' },
     });
     
     return { success: true, data: sales };
@@ -22,21 +24,18 @@ export async function getSales(businessId: string) {
 export async function createSale(businessId: string, saleData: Omit<Sale, 'id' | 'reference' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'businessId'>) {
   try {
     // Generate a unique reference
-    const reference = `REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const reference = `SL${date}${random}`;
     
-    // Si clientId est une chaîne vide, le définir comme null
-    const clientId = saleData.clientId === '' ? null : saleData.clientId;
-    
-    // Récupérer le produit pour calculer le profit de manière fiable
-    let profit = saleData.profit || 0;
-    
+    // Get product to calculate profit
+    let profit = 0;
     if (saleData.productId) {
       const product = await prisma.product.findUnique({
         where: { id: saleData.productId }
       });
       
       if (product) {
-        // Recalculer le profit en utilisant le prix d'achat réel du produit
         const costPrice = product.costPrice > 0 ? product.costPrice : product.wholesalePrice;
         const totalCost = costPrice * saleData.quantity;
         profit = saleData.total - totalCost;
@@ -48,7 +47,7 @@ export async function createSale(businessId: string, saleData: Omit<Sale, 'id' |
         id: `sale-${Date.now()}`,
         reference: reference,
         date: new Date(saleData.date),
-        clientId: clientId,
+        clientId: saleData.clientId,
         productId: saleData.productId,
         productName: saleData.productName,
         quantity: saleData.quantity,
@@ -65,23 +64,9 @@ export async function createSale(businessId: string, saleData: Omit<Sale, 'id' |
       },
     });
     
-    // Mettre à jour le solde du client si un client est associé à la vente
-    if (clientId) {
-      // Récupérer le client
-      const client = await prisma.client.findUnique({
-        where: { id: clientId }
-      });
-      
-      if (client) {
-        // Mettre à jour le solde du client (ajouter le montant de la vente)
-        await prisma.client.update({
-          where: { id: clientId },
-          data: {
-            balance: client.balance + saleData.total,
-            lastPurchaseDate: new Date()
-          }
-        });
-      }
+    // Recalculate client balance if a client is associated with the sale
+    if (saleData.clientId) {
+      await recalculateClientBalance(saleData.clientId);
     }
     
     return { success: true, data: sale };
@@ -107,6 +92,11 @@ export async function updateSale(id: string, saleData: Partial<Omit<Sale, 'id' |
       data: saleData,
     });
     
+    // Recalculate client balance if client is associated with the sale
+    if (saleData.clientId) {
+      await recalculateClientBalance(saleData.clientId);
+    }
+    
     return { success: true, data: sale };
   } catch (error) {
     console.error('Error updating sale:', error);
@@ -125,9 +115,19 @@ export async function deleteSale(id: string) {
       return { success: false, error: 'Seuls les administrateurs peuvent supprimer les ventes' };
     }
     
+    // Get the sale before deleting to recalculate client balance
+    const sale = await prisma.sale.findUnique({
+      where: { id }
+    });
+    
     await prisma.sale.delete({
       where: { id },
     });
+    
+    // Recalculate client balance if client was associated with the sale
+    if (sale && sale.clientId) {
+      await recalculateClientBalance(sale.clientId);
+    }
     
     return { success: true, message: 'Sale deleted successfully' };
   } catch (error) {

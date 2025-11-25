@@ -211,3 +211,15 @@ export interface SessionPayload {
 export type ActionResult<T> = 
   | { success: true; data: T }
   | { success: false; error: string };
+
+// Payment interface for client payment history
+export interface Payment {
+  id: string;
+  date: string;
+  amount: number;
+  method: 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'BANK_TRANSFER' | 'OTHER';
+  type: 'PAYMENT' | 'REFUND';
+  description?: string;
+  saleReference?: string;
+  clientId: string;
+}

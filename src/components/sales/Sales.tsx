@@ -73,14 +73,24 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
   const updateSaleMutation = useUpdateSale();
   const deleteSaleMutation = useDeleteSale();
   
-  // Convert database sale objects to Sale type
+  // Convert database sale objects to Sale type and add client names
   const formattedSales: Sale[] = useMemo(() => {
-        return sales.map((sale: any) => ({
+    return sales.map((sale: any) => {
+        // Find the client name if clientId exists
+        let clientName = '';
+        if (sale.clientId) {
+            const client = clients.find((c: any) => c.id === sale.clientId);
+            clientName = client ? client.name : '';
+        }
+        
+        return {
             ...sale,
             date: typeof sale.date === 'string' ? sale.date : sale.date.toISOString().split('T')[0],
-            saleType: sale.saleType as 'RETAIL' | 'WHOLESALE'
-        }));
-    }, [sales]);
+            saleType: sale.saleType as 'RETAIL' | 'WHOLESALE',
+            clientName: sale.clientName || clientName // Use existing clientName or look it up
+        };
+    });
+}, [sales, clients]);
 
     const handleOpenModal = () => {
         setFormData({ 
@@ -259,10 +269,15 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
             // Calculer le profit correctement : Profit = Total - (Coût unitaire * Quantité)
             const profit = total - (costPrice * item.quantity);
             
+            // Trouver le nom du client
+            const client = clients.find((c: any) => c.id === formData.clientId);
+            const clientName = client ? client.name : '';
+            
             // Préparer les données pour la vente (sans les champs gérés par le serveur)
             const saleData = { 
                 date: formData.date,
                 clientId: formData.clientId || null,
+                clientName: clientName, // Store client name
                 productId: item.productId,
                 productName: item.productName,
                 quantity: item.quantity,
@@ -511,18 +526,31 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
     };
     
     const handleEditSale = async (updatedSale: Partial<Sale>) => {
-      if (!editingSale) return;
-      
-      try {
-        await updateSaleMutation.mutateAsync({ 
-          id: editingSale.id, 
-          data: updatedSale 
-        });
-        handleCloseEditModal();
-      } catch (error) {
-        console.error('Error updating sale:', error);
-        alert('Erreur lors de la mise à jour de la vente');
-      }
+        if (!editingSale) return;
+        
+        try {
+            // If clientId is being updated, also update the clientName
+            let clientName = updatedSale.clientName || '';
+            if (updatedSale.clientId) {
+                const client = clients.find((c: any) => c.id === updatedSale.clientId);
+                clientName = client ? client.name : '';
+            }
+            
+            // Include the clientName in the update
+            const saleData = {
+                ...updatedSale,
+                clientName
+            };
+            
+            await updateSaleMutation.mutateAsync({ 
+                id: editingSale.id, 
+                data: saleData
+            });
+            handleCloseEditModal();
+        } catch (error) {
+            console.error('Error updating sale:', error);
+            alert('Erreur lors de la mise à jour de la vente');
+        }
     };
     
     const handleDeleteSale = async (saleId: string) => {
