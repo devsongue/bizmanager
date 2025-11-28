@@ -29,8 +29,8 @@ export const Table = <T extends { id: string },>(
             return <ChevronUp className="h-4 w-4 text-gray-400" />;
         }
         return sortConfig.direction === 'asc' ? 
-            <ChevronUp className="h-4 w-4 text-blue-600" /> : 
-            <ChevronDown className="h-4 w-4 text-blue-600" />;
+            <ChevronUp className="h-4 w-4 text-primary-600" /> : 
+            <ChevronDown className="h-4 w-4 text-primary-600" />;
     };
 
     return (
@@ -61,9 +61,9 @@ export const Table = <T extends { id: string },>(
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item: any) => (
-                        <tr key={item.id} className="hover:bg-blue-50 transition-colors duration-150">
+                        <tr key={item.id} className="hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors duration-150">
                             {columns.map((col, index) => (
-                                <td key={`${String(col.accessor)}-${index}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                <td key={`${String(col.accessor)}-${index}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     {col.render ? col.render(item) : (item[col.accessor] as React.ReactNode)}
                                 </td>
                             ))}

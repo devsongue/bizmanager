@@ -119,8 +119,8 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                         className="w-10 h-10 object-contain rounded-md"
                     />
                 ) : (
-                    <div className="bg-orange-100 dark:bg-orange-900/20 w-10 h-10 rounded-md flex items-center justify-center">
-                        <Building className="text-orange-600 dark:text-orange-400" size={20} />
+                    <div className="bg-primary-100 dark:bg-primary-900/20 w-10 h-10 rounded-md flex items-center justify-center">
+                        <Building className="text-primary-600 dark:text-primary-400" size={20} />
                     </div>
                 )}
                 <div className="ml-3">
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                 {businesses.length > 1 && activeBusiness && (
                     <div className="relative hidden md:block">
                         <select 
-                            className="appearance-none bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white py-2 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="appearance-none bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white py-2 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             value={activeBusiness.id}
                             onChange={(e) => handleBusinessSwitch(e.target.value)}
                         >
@@ -157,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                 {/* Theme Toggle */}
                 <button 
                     onClick={toggleTheme}
-                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                     aria-label="Toggle theme"
                 >
                     {theme === 'light' ? (
@@ -174,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                             setAlertsOpen(!alertsOpen);
                             setNotificationsOpen(false);
                         }} 
-                        className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                        className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                     >
                         <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                         {totalLowStockProducts > 0 && (
@@ -193,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                             setNotificationsOpen(!notificationsOpen);
                             setAlertsOpen(false);
                         }} 
-                        className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                        className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                     >
                         <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                         {notifications.filter(n => !n.read).length > 0 && (
@@ -214,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                             <img 
                                 src={currentUser.avatarUrl || '/default-avatar.png'} 
                                 alt={currentUser.name} 
-                                className="w-9 h-9 rounded-full border-2 border-orange-500"
+                                className="w-9 h-9 rounded-full border-2 border-primary-500"
                             />
                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
                         </div>
@@ -233,7 +233,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, businesses, activeB
                                     <img 
                                         src={currentUser.avatarUrl || '/default-avatar.png'} 
                                         alt={currentUser.name} 
-                                        className="w-10 h-10 rounded-full border-2 border-orange-500"
+                                        className="w-10 h-10 rounded-full border-2 border-primary-500"
                                     />
                                     <div className="ml-3">
                                         <p className="font-medium text-gray-800 dark:text-white">{currentUser.name}</p>

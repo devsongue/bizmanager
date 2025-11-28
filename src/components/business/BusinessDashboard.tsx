@@ -21,8 +21,6 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ business }
   const totalCOGS = calculateCOGS(business.sales || [], business.products || []);
   const totalOperationalExpenses = calculateOperatingExpenses(business.expenses || []);
   const netProfit = totalSales - totalCOGS - totalOperationalExpenses;
-  const totalProducts = (business.products || []).length;
-  const lowStockProducts = (business.products || []).filter(p => p.stock < 10).length;
 
   return (
     <div className="space-y-6">
