@@ -223,3 +223,18 @@ export interface Payment {
   saleReference?: string;
   clientId: string;
 }
+
+// Interface pour les extensions
+export interface Extension {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  icon?: string;
+  enabled: boolean;
+  installed: boolean;
+  settings?: any;
+  createdAt: string;
+  updatedAt: string;
+}
