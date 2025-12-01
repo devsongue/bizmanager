@@ -21,7 +21,7 @@ export const ClientsContent: React.FC<ClientsContentProps> = ({ activeBusiness }
   const business = activeBusiness || contextBusiness;
   
   if (!business) {
-    return <div className="flex justify-center items-center h-64">Aucune entreprise trouvée.</div>;
+    return <div className="flex justify-center items-center h-64 text-gray-800 dark:text-gray-200">Aucune entreprise trouvée.</div>;
   }
   
   const handleAddClient = async (newClient: any) => {

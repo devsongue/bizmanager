@@ -26,7 +26,6 @@ import {
     formatCurrency,
     formatPercentage
 } from '@/utils/calculations';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminPanelProps {
     allBusinesses: Business[];
@@ -493,70 +492,180 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Entreprise</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenus</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bénéfice Net</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ROI (%)</th>
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useBusinesses } from '../context/BusinessContext';
+import { useUsers } from '../context/UserContext';
+import { useExtensions } from '../context/ExtensionContext';
+import { User } from '../types/User';
+import { formatCurrency, formatPercentage } from '../utils/formatters';
+import { calculateCOGS, calculateGrossProfit, calculateNetProfit, calculateOperatingProfit, calculateROI } from '../utils/financialCalculations';
+
+const AdminPanel: React.FC = () => {
+    const { businesses, loading: businessesLoading } = useBusinesses();
+    const { users, loading: usersLoading } = useUsers();
+    const { currentUser } = useAuth();
+
+    // Only show this view to ADMIN users
+    if (currentUser?.role !== 'ADMIN') {
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+                    <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Accès refusé</h3>
+                <p className="mt-2 text-gray-500 dark:text-gray-400">
+                    Vous n'avez pas les permissions nécessaires pour accéder à cette section.
+                </p>
+            </div>
+        );
+    }
+
+    const [selectedView, setSelectedView] = React.useState<'dashboard' | 'businesses' | 'users' | 'financial' | 'extensions'>('dashboard');
+
+    const totalBusinesses = businesses.length;
+    const totalUsersCount = users.length;
+
+    const totalRevenue = businesses.reduce((sum: number, business: any) => sum + business.totalRevenue, 0);
+    const totalExpensesAmount = businesses.reduce((sum: number, business: any) => sum + business.operatingProfit, 0);
+    const netProfit = totalRevenue - totalExpensesAmount;
+
+    const getTopPerformingBusinesses = () => {
+        return businesses
+            .map((business: any) => {
+                const totalRevenue = business.totalRevenue;
+                const operatingProfit = business.operatingProfit;
+                const netProfit = calculateNetProfit(totalRevenue, operatingProfit);
+                const roi = calculateROI(totalRevenue, operatingProfit);
+
+                return {
+                    id: business.id,
+                    name: business.name,
+                    totalRevenue,
+                    netProfit,
+                    roi,
+                };
+            })
+            .sort((a: any, b: any) => b.netProfit - a.netProfit);
+    };
+
+    const displayedBusinesses = businesses;
+
+    const getBusinessPerformanceMetrics = () => {
+        return businesses.map((business: any) => {
+            const totalRevenue = business.totalRevenue;
+            const cogs = calculateCOGS(business.sales || [], business.products || []);
+            const grossProfit = calculateGrossProfit(totalRevenue, cogs);
+            const operatingProfit = calculateOperatingProfit(grossProfit);
+            const netProfit = calculateNetProfit(totalRevenue, operatingProfit);
+            const roi = calculateROI(totalRevenue, operatingProfit);
+            const totalProductValue = business.products?.reduce((sum: number, product: any) => sum + product.stock * product.price, 0) || 0;
+
+            return {
+                id: business.id,
+                name: business.name,
+                totalRevenue,
+                cogs,
+                grossProfit,
+                operatingProfit,
+                netProfit,
+                roi,
+                totalProductValue,
+            };
+        });
+    };
+
+    const getFilteredSales = () => {
+        return businesses.flatMap((business: any) => business.sales || []);
+    };
+
+    const displayedUsers = users;
+
+    if (businessesLoading || usersLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
+    // Render dashboard view for admin
+    const renderDashboardView = () => (
+        <div className="space-y-8">
+            {/* Business Performance Summary */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Performance des Entreprises</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Entreprise</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenus</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bénéfice Net</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ROI (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {getTopPerformingBusinesses().slice(0, 5).map((businessWithMetrics: any) => (
+                                <tr key={businessWithMetrics.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{businessWithMetrics.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{formatCurrency(businessWithMetrics.totalRevenue)}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${businessWithMetrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {formatCurrency(businessWithMetrics.netProfit)}
+                                    </td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${businessWithMetrics.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {formatPercentage(businessWithMetrics.roi)}
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {getTopPerformingBusinesses().slice(0, 5).map((businessWithMetrics: any) => (
-                                    <tr key={businessWithMetrics.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{businessWithMetrics.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{formatCurrency(businessWithMetrics.totalRevenue)}</td>
-                                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${businessWithMetrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {formatCurrency(businessWithMetrics.netProfit)}
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Activité Récente</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Montant</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Entreprise</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {getFilteredSales()
+                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                .slice(0, 5)
+                                .map((sale: any, index) => (
+                                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {new Date(sale.date).toLocaleDateString('fr-FR')}
                                         </td>
-                                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${businessWithMetrics.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {formatPercentage(businessWithMetrics.roi)}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                Vente
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                            {formatCurrency(sale.total)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {sale.businessName || (selectedBusiness ? selectedBusiness.name : 'Multiple')}
                                         </td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Activité Récente</h2>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Montant</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Entreprise</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {getFilteredSales()
-                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                    .slice(0, 5)
-                                    .map((sale: any, index) => (
-                                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {new Date(sale.date).toLocaleDateString('fr-FR')}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                                                    Vente
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                                {formatCurrency(sale.total)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {sale.businessName || (selectedBusiness ? selectedBusiness.name : 'Multiple')}
-                                            </td>
-                                        </tr>
-                                    ))}
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -742,18 +851,225 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateGrossProfit(business.sales || [], business.products || []), 0))}
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateGrossProfit(business.totalRevenue, business.cogs), 0))}
                         </p>
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Dépenses Opérationnelles</h3>
                         <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOperatingExpenses(business.expenses || []), 0))}
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + business.operatingProfit, 0))}
                         </p>
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Bénéfice Net</h3>
                         <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(netProfit)}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const ExtensionsManagementView: React.FC = () => {
+        const { extensions, loading, toggleExtension } = useExtensions();
+        const { currentUser } = useAuth();
+
+        // Only show this view to ADMIN users
+        if (currentUser?.role !== 'ADMIN') {
+            return (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+                        <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Accès refusé</h3>
+                    <p className="mt-2 text-gray-500 dark:text-gray-400">
+                        Vous n'avez pas les permissions nécessaires pour accéder à cette section.
+                    </p>
+                </div>
+            );
+        }
+
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Extensions Disponibles</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Gérez les extensions du système. Seules les extensions activées seront disponibles pour les entreprises.
+                    </p>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Extension
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Description
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Version
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Statut
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {extensions.map((extension) => (
+                                <tr key={extension.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-4">
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{extension.name}</div>
+                                                <div className="text-sm text-gray-500 dark:text-gray-400">Par {extension.author}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm text-gray-900 dark:text-white">{extension.description}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-900 dark:text-white">{extension.version}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                            extension.enabled 
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                        }`}>
+                                            {extension.enabled ? 'Activée' : 'Désactivée'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button
+                                            onClick={() => toggleExtension(extension.id)}
+                                            className={`${
+                                                extension.enabled
+                                                    ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'
+                                                    : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
+                                            }`}
+                                        >
+                                            {extension.enabled ? 'Désactiver' : 'Activer'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {extensions.length === 0 && (
+                    <div className="text-center py-12">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucune extension</h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Il n'y a actuellement aucune extension disponible.
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div>
+            <div className="flex items-center justify-between p-4">
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Tableau de Bord Administrateur</h1>
+                <div className="flex space-x-4">
+                    <button
+                        onClick={() => setSelectedView('dashboard')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            selectedView === 'dashboard' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                        }`}
+                    >
+                        Tableau de Bord
+                    </button>
+                    <button
+                        onClick={() => setSelectedView('businesses')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            selectedView === 'businesses' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                        }`}
+                    >
+                        Entreprises
+                    </button>
+                    <button
+                        onClick={() => setSelectedView('users')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            selectedView === 'users' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                        }`}
+                    >
+                        Utilisateurs
+                    </button>
+                    <button
+                        onClick={() => setSelectedView('financial')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            selectedView === 'financial' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                        }`}
+                    >
+                        Finances
+                    </button>
+                    <button
+                        onClick={() => setSelectedView('extensions')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            selectedView === 'extensions' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                        }`}
+                    >
+                        Extensions
+                    </button>
+                </div>
+            </div>
+            <div className="p-4">
+                {selectedView === 'dashboard' && renderDashboardView()}
+                {selectedView === 'businesses' && renderBusinessesView()}
+                {selectedView === 'users' && renderUsersView()}
+                {selectedView === 'financial' && renderFinancialView()}
+                {selectedView === 'extensions' && <ExtensionsManagementView />}
+            </div>
+        </div>
+    );
+};
+
+export default AdminPanel;
+
+                    </div>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Brute</h3>
+                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => 
+                                sum + calculateGrossProfit(business.sales || [], business.products || []), 0))}
+                        </p>
+                    </div>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge d'Exploitation</h3>
+                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) =>
+                                sum + calculateOperatingProfit(business.sales, business.expenses, business.products), 0))}
+                        </p>
+                    </div>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Marge Nette</h3>
+                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {formatCurrency(netProfit)}
                         </p>
                     </div>
@@ -767,20 +1083,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Dépenses Opérationnelles</h3>
                         <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOperatingExpenses(business.expenses || []), 0))}
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOperatingExpenses(business.expenses), 0))}
                         </p>
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Investissements Ponctuels</h3>
                         <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOneTimeExpenses(business.expenses || []), 0))}
+                            {formatCurrency(displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOneTimeExpenses(business.expenses), 0))}
                         </p>
                     </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition-shadow">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Retour sur Investissement</h3>
                         <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {totalExpensesAmount > 0 ?
-                                formatPercentage((netProfit / displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOneTimeExpenses(business.expenses || []), 0)) * 100) :
+                                formatPercentage((netProfit / displayedBusinesses.reduce((sum: number, business: any) => sum + calculateOneTimeExpenses(business.expenses), 0)) * 100) :
                                 '0.00%'}
                         </p>
                     </div>
@@ -970,189 +1286,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
         </div>
     );
 
-    // Render products view for admin
-    const renderProductsView = () => (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Liste des Produits</h2>
-                <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Sélectionner une entreprise:</span>
-                    <select
-                        value={selectedBusinessId || ''}
-                        onChange={(e) => setSelectedBusinessId(e.target.value || null)}
-                        className="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                        <option value="">Toutes les entreprises</option>
-                        {displayedBusinesses.map((business: any) => (
-                            <option key={business.id} value={business.id}>{business.name}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Produit</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Entreprise</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Prix</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Valeur du Stock</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {getAllProducts().map((product: any, index) => (
-                                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{product.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{product.businessName || (selectedBusiness ? selectedBusiness.name : 'Multiple')}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{formatCurrency(product.price)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{product.stock}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-purple-600 dark:text-purple-400">{formatCurrency(product.price * product.stock)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {getAllProducts().length === 0 && (
-                    <div className="text-center py-12">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun produit</h3>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Aucun produit trouvé pour l'entreprise sélectionnée.
-                        </p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
-    // Render extensions view for admin - Extensions management interface
-    const renderExtensionsView = () => {
-        // Only show this view to ADMIN users
-        if (currentUser?.role !== 'ADMIN') {
-            return (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
-                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
-                        <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Accès refusé</h3>
-                    <p className="mt-2 text-gray-500 dark:text-gray-400">
-                        Vous n'avez pas les permissions nécessaires pour accéder à cette section.
-                    </p>
-                </div>
-            );
-        }
-
-        if (extensionsLoading) {
-            return (
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-                </div>
-            );
-        }
-
-        return (
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Configuration des Extensions</h2>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Extensions Disponibles</h3>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Gérez les extensions du système. Seules les extensions activées seront disponibles pour les entreprises.
-                        </p>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Extension
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Description
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Version
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Statut
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {extensions.map((extension) => (
-                                    <tr key={extension.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                    </svg>
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{extension.name}</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">Par {extension.author}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900 dark:text-white">{extension.description}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900 dark:text-white">{extension.version}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                extension.enabled 
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                            }`}>
-                                                {extension.enabled ? 'Activée' : 'Désactivée'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button
-                                                onClick={() => toggleExtension(extension.id)}
-                                                className={`${
-                                                    extension.enabled
-                                                        ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'
-                                                        : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
-                                                }`}
-                                            >
-                                                {extension.enabled ? 'Désactiver' : 'Activer'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    {extensions.length === 0 && (
-                        <div className="text-center py-12">
-                            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucune extension</h3>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Il n'y a actuellement aucune extension disponible.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     if (businessesLoading || usersLoading) {
         return (
             <div className="flex w-full h-screen flex-col justify-center items-center space-y-4">
@@ -1275,11 +1408,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ allBusinesses, allUsers 
             {adminView === 'businesses' && renderBusinessesView()}
             {adminView === 'users' && renderUsersView()}
             {adminView === 'financial' && renderFinancialView()}
-            {adminView === 'products' && renderProductsView()}
-            {adminView === 'extensions' && renderExtensionsView()}
+            {adminView === 'products' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Liste des Produits</h2>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Sélectionner une entreprise:</span>
+                            <select
+                                value={selectedBusinessId || ''}
+                                onChange={(e) => setSelectedBusinessId(e.target.value || null)}
+                                className="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            >
+                                <option value="">Toutes les entreprises</option>
+                                {displayedBusinesses.map((business: any) => (
+                                    <option key={business.id} value={business.id}>{business.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            )}
+            {adminView === 'extensions' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Configuration des Extensions</h2>
+                    </div>
+                    <ExtensionsManagementView />
+                </div>
+            )}
         </div>
     );
 };
 
 export default AdminPanel;
-

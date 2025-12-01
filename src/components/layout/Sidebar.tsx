@@ -164,9 +164,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
   return (
     <aside className={`bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} flex flex-col h-full`}>
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex h-20 items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         {!isCollapsed && (
-          <h1 className="text-xl font-bold text-primary-600 dark:text-primary-400">devSongue</h1>
+          <h1 className=" text-base text-center font-bold text-primary-600 dark:text-primary-400">DEV SONGUE SUITE</h1>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}

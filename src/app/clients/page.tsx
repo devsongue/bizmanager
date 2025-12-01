@@ -11,7 +11,7 @@ export default function ClientsPage() {
   if (isBusinessesLoading) {
     return (
         <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
-   <div className="flex items-center space-x-4 p-6">
+   <div className="flex items-center space-x-4">
         <div className="relative">
           <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
           <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
@@ -27,7 +27,7 @@ export default function ClientsPage() {
   
   return (
     <MainLayout businesses={businesses}>
-      <div className="p-4 md:p-8">
+      <div className="p-1">
         <ClientsContent />
       </div>
     </MainLayout>

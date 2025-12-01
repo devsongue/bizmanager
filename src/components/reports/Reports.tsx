@@ -11,6 +11,9 @@ import {
     formatPercentage
 } from '@/utils/calculations';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Sector } from 'recharts';
+import { PrintableInventoryReport } from '@/components/reports/PrintableInventoryReport';
+import { PrintableSalesReport } from '@/components/reports/PrintableSalesReport';
+import { PrintableFinancialReport } from '@/components/reports/PrintableFinancialReport';
 
 interface ReportsProps {
     business: Business;
@@ -214,7 +217,9 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [activeIndex, setActiveIndex] = useState(0);
     const [profitSortKey, setProfitSortKey] = useState<'totalProfit' | 'totalQuantity'>('totalProfit');
-    const [reportView, setReportView] = useState<'summary' | 'details' | 'comparison'>('summary'); // Nouvel état pour la vue des rapports
+    const [reportView, setReportView] = useState<'summary' | 'details' | 'comparison'>('summary');
+    const [showPrintDialog, setShowPrintDialog] = useState(false);
+    const [printReportType, setPrintReportType] = useState<'inventory' | 'sales' | 'financial' | null>(null);
 
     // Utiliser useMemo pour s'assurer que les données sont rechargées lorsque l'entreprise change
     const businessData = useMemo(() => ({
@@ -413,6 +418,18 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
 
+    // Fonction pour gérer l'impression des rapports
+    const handlePrintReport = (reportType: 'inventory' | 'sales' | 'financial') => {
+        setPrintReportType(reportType);
+        setShowPrintDialog(true);
+    };
+
+    // Fonction pour fermer la boîte de dialogue d'impression
+    const handleClosePrintDialog = () => {
+        setShowPrintDialog(false);
+        setPrintReportType(null);
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -540,6 +557,122 @@ export const Reports: React.FC<ReportsProps> = ({ business, hideFilters = false 
                 sortKey={profitSortKey} 
                 setSortKey={setProfitSortKey} 
             />
+            
+            {/* Boutons d'impression */}
+            <div className="flex justify-end mb-4">
+                <div className="flex space-x-2">
+                    <Button 
+                        onClick={() => handlePrintReport('inventory')}
+                        className="flex items-center space-x-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Imprimer l'inventaire</span>
+                    </Button>
+                    <Button 
+                        variant="secondary"
+                        onClick={() => handlePrintReport('sales')}
+                        className="flex items-center space-x-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Imprimer les ventes</span>
+                    </Button>
+                    <Button 
+                        variant="secondary"
+                        onClick={() => handlePrintReport('financial')}
+                        className="flex items-center space-x-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Rapport financier</span>
+                    </Button>
+                </div>
+            </div>
+
+            {/* Boîte de dialogue pour l'impression */}
+            {showPrintDialog && printReportType === 'inventory' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Impression du rapport d'inventaire</h2>
+                                <button 
+                                    onClick={handleClosePrintDialog}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <PrintableInventoryReport 
+                                products={businessData.products}
+                                businessName={business.name}
+                                onPrintComplete={handleClosePrintDialog}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {showPrintDialog && printReportType === 'sales' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Impression du rapport de ventes</h2>
+                                <button 
+                                    onClick={handleClosePrintDialog}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <PrintableSalesReport 
+                                sales={filteredData.sales}
+                                products={businessData.products}
+                                businessName={business.name}
+                                dateRange={dateRange}
+                                onPrintComplete={handleClosePrintDialog}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {showPrintDialog && printReportType === 'financial' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Rapport financier</h2>
+                                <button 
+                                    onClick={handleClosePrintDialog}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <PrintableFinancialReport 
+                                sales={filteredData.sales}
+                                expenses={filteredData.expenses}
+                                products={businessData.products}
+                                businessName={business.name}
+                                dateRange={dateRange}
+                                onPrintComplete={handleClosePrintDialog}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

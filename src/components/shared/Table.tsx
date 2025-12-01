@@ -35,15 +35,15 @@ export const Table = <T extends { id: string },>(
 
     return (
         <div className="overflow-x-auto rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <tr>
                         {columns.map((col, index) => (
                             <th 
                                 key={`${String(col.accessor)}-${index}`} 
                                 scope="col" 
-                                className={`px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider ${
-                                    col.sortable ? 'cursor-pointer hover:bg-gray-200 transition-colors duration-200' : ''
+                                className={`px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider dark:text-gray-300 ${
+                                    col.sortable ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200' : ''
                                 }`}
                                 onClick={() => col.sortable && handleSort(col.accessor)}
                             >
@@ -59,7 +59,7 @@ export const Table = <T extends { id: string },>(
                         ))}
                     </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                     {data.map((item: any) => (
                         <tr key={item.id} className="hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors duration-150">
                             {columns.map((col, index) => (

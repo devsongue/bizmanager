@@ -319,23 +319,17 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
     }
 
     return (
-      <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
         {/* En-tête avec recherche et statistiques */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">
                 Clients
               </h1>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="bg-white rounded-xl p-4 shadow-md">
-                <p className="text-gray-600 text-sm">Total Clients</p>
-                <p className="text-2xl font-bold text-orange-600">{clients.length}</p>
-              </div>
-           
-            </div>
+          
           </div>
           
           <div className="flex flex-col md:flex-row gap-4">
@@ -346,7 +340,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   placeholder="Rechercher un client..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-xl py-3 px-4 pl-12 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl py-3 px-4 pl-12 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                 />
                 <svg 
                   className="absolute left-4 top-3.5 h-5 w-5 text-gray-500" 
@@ -369,8 +363,8 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                 <p className="text-gray-600 text-sm">Total Clients</p>
                 <p className="text-2xl font-bold text-orange-600">{clients.length}</p>
               </div>
-              <div className="bg-white rounded-xl p-4 shadow-md">
-                <p className="text-gray-600 text-sm">Total des Soldes</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Total des Soldes</p>
                 <p className="text-2xl font-bold text-orange-600">{calculateTotalBalance().toLocaleString('fr-FR')} FCFA</p>
               </div>
             </div>
@@ -407,7 +401,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 hover:border-orange-200"
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-orange-200"
                 onClick={() => handleOpenClientDetail(convertClient(client))}
               >
                 <div className="flex items-start justify-between">
@@ -416,8 +410,8 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                       <User className="text-orange-600" size={20} />
                     </div>
                     <div className="ml-3 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate text-sm">{client.name}</h3>
-                      <p className="text-gray-500 text-xs truncate">{client.contact}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm">{client.name}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{client.contact}</p>
                     </div>
                   </div>
                   <div className="flex items-center bg-gray-100 px-1.5 py-0.5 rounded-full">
@@ -427,17 +421,17 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                 </div>
                 
                 <div className="mt-3 space-y-1.5">
-                  <div className="flex items-center text-gray-500 text-xs">
+                  <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs">
                     <Building className="mr-1.5" size={12} />
                     <span className="truncate">{client.company || 'N/A'}</span>
                   </div>
-                  <div className="flex items-center text-gray-500 text-xs">
+                  <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs">
                     <Phone className="mr-1.5" size={12} />
                     <span className="truncate">{client.telephone || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                     <div>
-                      <p className="text-gray-500 text-xs">Solde</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">Solde</p>
                       <p className={`font-semibold text-sm ${getBalanceColor(client.balance)}`}>
                         {formatBalance(client.balance)}
                       </p>
@@ -449,7 +443,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                           e.stopPropagation();
                           handleOpenEditModal(convertClient(client));
                         }}
-                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs py-1 px-2 rounded-md transition-colors duration-150"
+                        className="bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-700 dark:text-blue-300 text-xs py-1 px-2 rounded-md transition-colors duration-150"
                       >
                         Éditer
                       </Button>
@@ -459,7 +453,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                           e.stopPropagation();
                           handleDeleteClient(client.id);
                         }}
-                        className="bg-red-50 hover:bg-red-100 text-red-700 text-xs py-1 px-2 rounded-md transition-colors duration-150"
+                        className="bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 text-xs py-1 px-2 rounded-md transition-colors duration-150"
                       >
                         Suppr.
                       </Button>
@@ -487,7 +481,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                             required
                         />
                     </div>
@@ -499,7 +493,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="contact"
                             value={formData.contact}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                             required
                         />
                     </div>
@@ -511,7 +505,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="telephone"
                             value={formData.telephone || ''}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         />
                     </div>
                     <div>
@@ -522,7 +516,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="email"
                             value={formData.email || ''}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         />
                     </div>
                     <div className="md:col-span-2">
@@ -533,7 +527,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="address"
                             value={formData.address || ''}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         />
                     </div>
                     <div>
@@ -544,7 +538,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                             name="company"
                             value={formData.company || ''}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         />
                     </div>
                 </div>
@@ -584,7 +578,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                         value={paymentAmount}
                         onChange={handlePaymentChange}
                         min="0"
-                        className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         required
                     />
                 </div>
@@ -595,14 +589,14 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                         name="paymentMethod"
                         value={paymentMethod}
                         onChange={handlePaymentMethodChange}
-                        className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                         required
                     >
-                        <option value="CASH" className="bg-white">Espèces</option>
-                        <option value="BANK_TRANSFER" className="bg-white">Virement bancaire</option>
-                        <option value="CHECK" className="bg-white">Chèque</option>
-                        <option value="CREDIT_CARD" className="bg-white">Carte de crédit</option>
-                        <option value="MOBILE_MONEY" className="bg-white">Mobile Money</option>
+                        <option value="CASH" className="bg-white dark:bg-gray-800">Espèces</option>
+                        <option value="BANK_TRANSFER" className="bg-white dark:bg-gray-800">Virement bancaire</option>
+                        <option value="CHECK" className="bg-white dark:bg-gray-800">Chèque</option>
+                        <option value="CREDIT_CARD" className="bg-white dark:bg-gray-800">Carte de crédit</option>
+                        <option value="MOBILE_MONEY" className="bg-white dark:bg-gray-800">Mobile Money</option>
                     </select>
                 </div>
                 <div className="flex justify-end space-x-4 pt-4">
@@ -634,12 +628,12 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
             {selectedClient && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-xl p-6 shadow-md">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
                     <h3 className="text-lg font-semibold mb-4 text-orange-600">Informations du Client</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Nom</span>
-                        <span className="font-medium">{selectedClient.name}</span>
+                        <span className="text-gray-600 dark:text-gray-300">Nom</span>
+                        <span className="font-medium dark:text-white">{selectedClient.name}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Contact</span>
@@ -679,25 +673,25 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   </div>
                   
                   {/* Historique des paiements */}
-                  <div className="bg-white rounded-xl p-6 shadow-md">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
                     <h3 className="text-lg font-semibold mb-4 text-orange-600">Historique des Paiements</h3>
                     {paymentsLoading ? (
                       <div className="flex justify-center items-center h-32">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
                       </div>
                     ) : payments.length === 0 ? (
-                      <p className="text-gray-600 text-center py-8">Aucun historique de paiement disponible pour le moment.</p>
+                      <p className="text-gray-600 dark:text-gray-300 text-center py-8">Aucun historique de paiement disponible pour le moment.</p>
                     ) : (
                       <div className="space-y-3 max-h-80 overflow-y-auto">
                         {payments.map((payment) => (
-                          <div key={payment.id} className="flex justify-between items-center border-b border-gray-100 pb-3">
+                          <div key={payment.id} className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
                             <div>
-                              <p className="font-medium text-gray-800">{formatDate(payment.date)}</p>
-                              <p className="text-sm text-gray-600">{getPaymentMethodName(payment.method)}</p>
+                              <p className="font-medium text-gray-800 dark:text-gray-100">{formatDate(payment.date)}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">{getPaymentMethodName(payment.method)}</p>
                             </div>
                             <div className="text-right">
-                              <p className="font-medium text-gray-800">{payment.amount.toLocaleString('fr-FR')} FCFA</p>
-                              <p className="text-xs text-gray-500">{payment.saleReference}</p>
+                              <p className="font-medium text-gray-800 dark:text-gray-100">{payment.amount.toLocaleString('fr-FR')} FCFA</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{payment.saleReference}</p>
                             </div>
                           </div>
                         ))}
@@ -738,7 +732,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                   required
                 />
               </div>
@@ -750,7 +744,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="contact"
                   value={formData.contact}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                   required
                 />
               </div>
@@ -762,7 +756,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="telephone"
                   value={formData.telephone || ''}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                 />
               </div>
               <div>
@@ -773,7 +767,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="email"
                   value={formData.email || ''}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                 />
               </div>
               <div className="md:col-span-2">
@@ -784,7 +778,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="address"
                   value={formData.address || ''}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                 />
               </div>
               <div className="md:col-span-2">
@@ -795,7 +789,7 @@ export const ClientsRefactored: React.FC<ClientsProps> = ({ business, onAddClien
                   name="company"
                   value={formData.company || ''}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 shadow-sm"
                 />
               </div>
             </div>
