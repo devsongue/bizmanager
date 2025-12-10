@@ -40,7 +40,7 @@ interface BusinessSettings {
 export interface Sale {
   id: string;
   reference: string;
-  date: string;
+  date: Date;
   clientId?: string | null;
   clientName?: string | null;
   productId?: string | null;
@@ -56,15 +56,15 @@ export interface Sale {
   paymentMethod: PaymentMethod;
   businessId: string;
   userId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface Expense {
   id: string;
   reference?: string | null;
-  date: string;
+  date: Date;
   category: string;
   description: string;
   amount: number;
@@ -72,9 +72,9 @@ export interface Expense {
   receiptUrl?: string | null;
   approvedById?: string | null;
   businessId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface Product {
@@ -93,9 +93,9 @@ export interface Product {
   images?: any | null;
   supplierId?: string | null;
   businessId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface Client {
@@ -109,11 +109,11 @@ export interface Client {
   company?: string | null;
   notes?: string | null;
   loyaltyPoints: number;
-  lastPurchaseDate?: string | null;
+  lastPurchaseDate?: Date | null;
   businessId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface Supplier {
@@ -129,9 +129,9 @@ export interface Supplier {
   rating?: number | null;
   notes?: string | null;
   businessId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface Business {
@@ -157,9 +157,9 @@ export interface Business {
   expenses?: Expense[];
   clients?: Client[];
   suppliers?: Supplier[];
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface User {
@@ -170,14 +170,14 @@ export interface User {
   role: UserRole;
   status?: UserStatus | null;
   avatarUrl?: string | null;
-  lastLogin?: string | null;
+  lastLogin?: Date | null;
   permissions?: any | null;
   managedBusinessIds?: string[];
   phone?: string | null;
   address?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface AuditLog {
@@ -185,7 +185,7 @@ export interface AuditLog {
   userId?: string | null;
   action: string;
   details?: any | null;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export interface Notification {
@@ -196,7 +196,7 @@ export interface Notification {
   title: string;
   message: string;
   read: boolean;
-  createdAt: string;
+  createdAt: Date;
   relatedEntityId?: string | null;
 }
 

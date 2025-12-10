@@ -53,6 +53,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Définir le cookie pour le middleware
         document.cookie = `auth-token=${simulatedToken}; path=/; max-age=604800; SameSite=Lax`;
         
+        // Also set session token for consistency
+        document.cookie = `session-token=${simulatedToken}; path=/; max-age=604800; SameSite=Lax`;
+        
         return true;
       } else {
         // Clear any existing user data on failed login

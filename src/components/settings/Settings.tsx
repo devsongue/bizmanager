@@ -341,9 +341,26 @@ export const Settings: React.FC<SettingsProps> = ({ businesses, onAddBusiness, o
   const handleEdit = (business: Business) => {
     handleOpenModal(business);
   };
-
+  
+  if (isBusinessesLoading) {
+    return(
+        <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+   <div className="flex items-center space-x-4 p-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-800">Paramètres</p>
+          <p className="text-sm text-gray-600 animate-pulse">Chargement en cours...</p>
+        </div>
+      </div>
+    </div>
+    );
+  }
   return (
     <div className="space-y-6">
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Entreprises</h1>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

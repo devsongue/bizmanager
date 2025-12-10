@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import type { Business, Product, User } from '@/types';
+import type { Business, Product, Supplier, User } from '@/types';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { Table } from '../shared/Table';
@@ -10,12 +10,16 @@ import { useRestockProduct } from '@/hooks/useRestock';
 import { useSuppliers } from '@/hooks/useSupplier';
 import { useAuth } from '@/contexts/AuthContext';
 import { Edit, PackagePlus, Trash2 } from 'lucide-react';
+import { ProductForm } from './ProductForm';
 
 interface ProductsProps {
     business: Business;
     onAddProduct: (newProduct: Product) => void;
     onUpdateProduct: (updatedProduct: Product) => void;
 }
+
+// Define a type for the form data that omits certain fields from Product
+type ProductFormData = Omit<Product, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'sku' | 'barcode' | 'images'>;
 
 export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUpdateProduct }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +28,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
     const [restockingProduct, setRestockingProduct] = useState<Product | null>(null);
-    const [formData, setFormData] = useState<Omit<Product, 'id' | 'businessId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'sku' | 'barcode' | 'images'>>({ 
+    const [formData, setFormData] = useState<ProductFormData>({ 
         name: '', 
         description: '',
         category: '', 
@@ -94,23 +98,10 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         return Math.ceil(filteredProducts.length / itemsPerPage);
     }, [filteredProducts.length, itemsPerPage]);
     
-    // Maintenant on peut utiliser les conditions
-    if (isLoading || isSuppliersLoading) {
-        return (
-            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
-                <div className="flex items-center space-x-4 p-6">
-                    <div className="relative">
-                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
-                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-                    </div>
-                    <div className="space-y-2">
-                        <p className="font-semibold text-gray-800 dark:text-white">Produits</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">Chargement en cours...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    // Fonction pour recalculer la valeur du stock en temps réel
+    const calculateStockValue = useMemo(() => {
+        return products.reduce((sum, product) => sum + (product.stock * product.wholesalePrice), 0);
+    }, [products]);
     
     // Gestion des images
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,7 +214,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev: ProductFormData) => ({
             ...prev,
             [name]: name === 'stock' || name === 'minStock' || name === 'costPrice' || name === 'retailPrice' || name === 'wholesalePrice' || name === 'purchasePrice' ? Number(value) : value
         }));
@@ -234,7 +225,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         
         if (name === 'supplierId') {
             // Find the supplier name based on the selected ID
-            const selectedSupplier = suppliers.find((supplier: any) => supplier.id === value);
+            const selectedSupplier = suppliers.find((supplier: Supplier) => supplier.id === value);
             setRestockData(prev => ({
                 ...prev,
                 supplierId: value,
@@ -244,7 +235,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         
         const numValue = Number(value);
         
-        setRestockData(prev => {
+        setRestockData((prev: any) => {
             const updatedData = {
                 ...prev,
                 [name]: name === 'quantity' || name === 'unitCost' || name === 'totalCost' ? numValue : value
@@ -279,38 +270,36 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         return 'text-red-600';
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
+    const handleSubmit = async (productData: ProductFormData & { images?: string[] }) => {
         // Ajouter les champs requis manquants
-        let productData: any = {
-            ...formData,
+        let completeProductData: any = {
+            ...productData,
             businessId: business.id,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             // Champs optionnels avec valeurs par défaut
             sku: undefined,
             barcode: undefined,
-            images: imagePreviews.length > 0 ? imagePreviews : undefined
+            images: productData.images && productData.images.length > 0 ? productData.images : undefined
         };
         
         // Pour les non-administrateurs, exclure le prix d'achat
         if (currentUser?.role !== 'ADMIN') {
-            const { costPrice, ...filteredData } = productData;
-            productData = filteredData;
+            const { costPrice, ...filteredData } = completeProductData;
+            completeProductData = filteredData;
         }
         
         if (editingProduct) {
             // Update existing product
             await updateProductMutation.mutateAsync({ 
                 id: editingProduct.id, 
-                data: productData 
+                data: completeProductData 
             });
         } else {
             // Create new product
             await createProductMutation.mutateAsync({ 
                 businessId: business.id, 
-                data: productData 
+                data: completeProductData 
             });
         }
         
@@ -460,6 +449,24 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
         }
     ] as any;
 
+    // Render loading state conditionally at the end to maintain hook order consistency
+    if (isLoading || isSuppliersLoading) {
+        return (
+            <div className="flex w-full h-screen flex-col justify-center items-center  space-y-4">
+                <div className="flex items-center space-x-4 p-6">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-orange-200 rounded-full"></div>
+                        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="font-semibold text-gray-800 dark:text-white">Produits</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">Chargement en cours...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* En-tête avec recherche et bouton d'ajout */}
@@ -525,7 +532,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
                         <h3 className="text-sm font-medium opacity-80">Valeur Stock</h3>
                         <p className="text-2xl font-bold mt-1">
-                            {products.reduce((sum, product) => sum + (product.stock * product.wholesalePrice), 0).toLocaleString('fr-FR')} FCFA
+                            {calculateStockValue.toLocaleString('fr-FR')} FCFA
                         </p>
                     </div>
                 )}
@@ -603,209 +610,13 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                 title={editingProduct ? "Modifier le Produit" : "Ajouter un Produit"}
                 size="lg"
             >
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du produit</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                required
-                                placeholder="Ex: Smartphone Samsung Galaxy"
-                            />
-                        </div>
-                        
-                        <div>
-                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catégorie</label>
-                            <input
-                                type="text"
-                                id="category"
-                                name="category"
-                                value={formData.category}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                required
-                                placeholder="Ex: Électronique"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Description du produit..."
-                        />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div>
-                            <label htmlFor="stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock actuel</label>
-                            <input
-                                type="number"
-                                id="stock"
-                                name="stock"
-                                value={formData.stock}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                required
-                                min="0"
-                            />
-                        </div>
-                        
-                        <div>
-                            <label htmlFor="minStock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock minimum</label>
-                            <input
-                                type="number"
-                                id="minStock"
-                                name="minStock"
-                                value={formData.minStock}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                min="0"
-                            />
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Alerte envoyée lorsque le stock descend en dessous de cette valeur</p>
-                        </div>
-                        
-                        <div>
-                            <label htmlFor="supplierId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fournisseur</label>
-                            <select
-                                id="supplierId"
-                                name="supplierId"
-                                value={formData.supplierId || ''}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            >
-                                <option value="">Sélectionner un fournisseur</option>
-                                {suppliers.map((supplier: any) => (
-                                    <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-3">Prix du produit</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Afficher le champ prix d'achat uniquement pour les administrateurs */}
-                            {currentUser?.role === 'ADMIN' && (
-                                <div>
-                                    <label htmlFor="costPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix d'achat (FCFA)</label>
-                                    <input
-                                        type="number"
-                                        id="costPrice"
-                                        name="costPrice"
-                                        value={formData.costPrice}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        min="0"
-                                        placeholder="0"
-                                    />
-                                </div>
-                            )}
-                            
-                            <div>
-                                <label htmlFor="retailPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix détail (FCFA)</label>
-                                <input
-                                    type="number"
-                                    id="retailPrice"
-                                    name="retailPrice"
-                                    value={formData.retailPrice}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    required
-                                    min="0"
-                                    placeholder="0"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="wholesalePrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix gros (FCFA)</label>
-                                <input
-                                    type="number"
-                                    id="wholesalePrice"
-                                    name="wholesalePrice"
-                                    value={formData.wholesalePrice}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    required
-                                    min="0"
-                                    placeholder="0"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Images du produit</label>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
-                            <div className="space-y-1 text-center">
-                                <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                                    <label className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                                        <span>Sélectionner des fichiers</span>
-                                        <input 
-                                            type="file" 
-                                            multiple 
-                                            accept="image/*" 
-                                            onChange={handleImageChange}
-                                            className="sr-only" 
-                                        />
-                                    </label>
-                                    <p className="pl-1">ou glisser-déposer</p>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    PNG, JPG, GIF jusqu'à 10MB
-                                </p>
-                            </div>
-                        </div>
-                        
-                        {/* Aperçu des images */}
-                        {imagePreviews.length > 0 && (
-                            <div className="mt-4 grid grid-cols-3 gap-4">
-                                {imagePreviews.map((preview, index) => (
-                                    <div key={index} className="relative">
-                                        <img 
-                                            src={preview} 
-                                            alt={`Preview ${index}`} 
-                                            className="h-24 w-full object-cover rounded-md"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newPreviews = imagePreviews.filter((_, i) => i !== index);
-                                                setImagePreviews(newPreviews);
-                                            }}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                        >
-                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className="flex justify-end space-x-3 pt-2">
-                        <Button variant="secondary" onClick={handleCloseModal} className="px-5 py-2">
-                            Annuler
-                        </Button>
-                        <Button type="submit" className="px-5 py-2">
-                            {editingProduct ? "Mettre à jour" : "Ajouter"}
-                        </Button>
-                    </div>
-                </form>
+                <ProductForm 
+                    product={editingProduct || undefined}
+                    suppliers={suppliers}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCloseModal}
+                    isSubmitting={createProductMutation.isPending || updateProductMutation.isPending}
+                />
             </Modal>
             
             {/* Modal de réapprovisionnement avec design amélioré */}
@@ -880,7 +691,7 @@ export const Products: React.FC<ProductsProps> = ({ business, onAddProduct, onUp
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="">Sélectionner un fournisseur</option>
-                            {suppliers.map((supplier: any) => (
+                            {suppliers.map((supplier: Supplier) => (
                                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                             ))}
                         </select>

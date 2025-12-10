@@ -37,7 +37,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
     // Filtrer les fournisseurs en fonction du terme de recherche
     const filteredSuppliers = useMemo(() => {
         if (!searchTerm) return suppliers;
-        return suppliers.filter((supplier: any) =>
+        return suppliers.filter((supplier: Supplier) =>
             supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             supplier.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (supplier.contacts && supplier.contacts.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -131,8 +131,8 @@ export const Suppliers: React.FC<SuppliersProps> = ({ business, onAddSupplier })
         const supplierData: any = {
             ...formData,
             businessId: business.id,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
             // Champs optionnels avec valeurs par défaut
             email: undefined,
             telephone: undefined,

@@ -453,14 +453,14 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         sortable: true,
         render: (item: Sale) => (
           <div className="flex items-center">
-            <div className="bg-orange-100 p-2 rounded-lg mr-3">
-              <User className="w-4 h-4 text-orange-600" />
+            <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-lg mr-3">
+              <User className="w-4 h-4 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <span className={`font-semibold ${item.clientName ? "text-gray-900" : "text-gray-500"}`}>
+              <span className={`font-semibold ${item.clientName ? "text-gray-900 dark:text-gray-200" : "text-gray-500 dark:text-gray-400"}`}>
                 {item.clientName || 'Non spécifié'}
               </span>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {item.saleType === 'RETAIL' ? 'Vente au détail' : 'Vente en gros'}
               </div>
             </div>
@@ -473,12 +473,12 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         sortable: true,
         render: (item: Sale) => (
           <div className="flex items-center">
-            <div className="bg-blue-100 p-2 rounded-lg mr-3">
-              <Package className="w-4 h-4 text-blue-600" />
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+              <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <span className="font-semibold text-gray-900">{item.productName}</span>
-              <div className="text-xs text-gray-500">
+              <span className="font-semibold text-gray-900 dark:text-gray-200">{item.productName}</span>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {item.quantity} {item.quantity > 1 ? 'unités' : 'unité'}
               </div>
             </div>
@@ -503,8 +503,8 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
         sortable: true,
         render: (item: Sale) => (
           <div className="text-right">
-            <span className="font-mono font-bold text-lg text-orange-600">
-              {item.total.toLocaleString('fr-FR')} <span className="text-sm">FCFA</span>
+            <span className="font-mono font-bold text-lg text-orange-600 dark:text-orange-400">
+              {item.total.toLocaleString('fr-FR')} <span className="text-sm dark:text-gray-400">FCFA</span>
             </span>
           </div>
         )
@@ -685,65 +685,65 @@ export const Sales: React.FC<SalesProps> = ({ business, onAddSale }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center">
-            <div className="p-3 rounded-xl bg-orange-100">
-              <DollarSign className="h-6 w-6 text-orange-600" />
+            <div className="p-3 rounded-xl bg-orange-100 dark:bg-orange-900/30">
+              <DollarSign className="h-6 w-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total des ventes</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {totalSales.toLocaleString('fr-FR')} <span className="text-sm font-normal">FCFA</span>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total des ventes</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {totalSales.toLocaleString('fr-FR')} <span className="text-sm font-normal dark:text-gray-400">FCFA</span>
               </p>
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
-            <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-            <span className="text-green-600 font-medium">+12% ce mois</span>
+            <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400 mr-1" />
+            <span className="text-green-600 dark:text-green-400 font-medium">+12% ce mois</span>
           </div>
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center">
-            <div className="p-3 rounded-xl bg-blue-100">
-              <ShoppingCart className="h-6 w-6 text-blue-600" />
+            <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+              <ShoppingCart className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Nombre de ventes</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{sortedAndFilteredSales.length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre de ventes</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{sortedAndFilteredSales.length}</p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <span className="font-medium">{filteredSalesByType.length}</span> cette période
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium dark:text-gray-300">{filteredSalesByType.length}</span> cette période
           </div>
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center">
-            <div className="p-3 rounded-xl bg-purple-100">
-              <Users className="h-6 w-6 text-purple-600" />
+            <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Clients uniques</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{uniqueClients}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Clients uniques</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{uniqueClients}</p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
             Clients actifs
           </div>
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center">
-            <div className="p-3 rounded-xl bg-green-100">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+            <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
+              <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Profit total</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {totalProfit.toLocaleString('fr-FR')} <span className="text-sm font-normal">FCFA</span>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Profit total</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {totalProfit.toLocaleString('fr-FR')} <span className="text-sm font-normal dark:text-gray-400">FCFA</span>
               </p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
             Marge bénéficiaire
           </div>
         </div>

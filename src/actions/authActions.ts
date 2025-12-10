@@ -1,6 +1,6 @@
 "use server";
 
-import { createSessionToken, setSessionCookie } from '@/lib/auth';
+import { createSessionToken, setSessionCookie, setAuthTokenCookie } from '@/lib/auth';
 import { authenticateUser } from './userActions';
 import { ActionResult, SessionPayload } from '@/types';
 
@@ -26,21 +26,12 @@ export async function login(email: string, password: string): Promise<ActionResu
     // Set session cookie
     await setSessionCookie(token);
     
+    // Also set the legacy auth-token for backward compatibility
+    await setAuthTokenCookie(token);
+    
     return { success: true, data: authResult.data };
   } catch (error) {
     console.error('Login error:', error);
     return { success: false, error: 'An error occurred during login' };
-  }
-}
-
-// Logout action
-export async function logout(): Promise<ActionResult<{ message: string }>> {
-  try {
-    // In a real implementation, you might want to invalidate the token
-    // For now, we'll just return success
-    return { success: true, data: { message: 'Logged out successfully' } };
-  } catch (error) {
-    console.error('Logout error:', error);
-    return { success: false, error: 'An error occurred during logout' };
   }
 }

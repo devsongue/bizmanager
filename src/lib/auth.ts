@@ -33,7 +33,18 @@ export async function verifySessionToken(token: string) {
 
 // Set session cookie
 export async function setSessionCookie(token: string) {
-  (await cookies()).set('session-token', token, {
+  (await cookies()).set('auth-token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    path: '/',
+    sameSite: 'strict',
+  });
+}
+
+// Set auth token cookie (legacy compatibility)
+export async function setAuthTokenCookie(token: string) {
+  (await cookies()).set('auth-token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -44,10 +55,10 @@ export async function setSessionCookie(token: string) {
 
 // Get session cookie
 export async function getSessionCookie() {
-  return (await cookies()).get('session-token')?.value;
+  return (await cookies()).get('auth-token')?.value;
 }
 
 // Clear session cookie
 export async function clearSessionCookie() {
-  (await cookies()).delete('session-token');
+  (await cookies()).delete('auth-token');
 }
