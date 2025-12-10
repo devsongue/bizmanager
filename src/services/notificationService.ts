@@ -3,7 +3,7 @@ import type { Business, Product, Sale, Expense, Notification } from '@/types';
 // Générer des notifications basées sur les données de l'entreprise
 export const generateNotifications = (business: Business): Notification[] => {
   const notifications: Notification[] = [];
-  const now = new Date().toISOString();
+  const now = new Date(); // Change this to a Date object instead of string
   
   // Vérifier les stocks faibles
   if (business.settings?.notifications?.enableLowStockAlerts !== false) {
@@ -109,7 +109,7 @@ export const generateNewSaleNotification = (businessId: string, sale: Sale): Not
     title: 'Nouvelle vente',
     message: `Une nouvelle vente de ${sale.total.toLocaleString('fr-FR')} FCFA a été enregistrée`,
     read: false,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     relatedEntityId: sale.id
   };
 };
@@ -124,7 +124,7 @@ export const generateNewExpenseNotification = (businessId: string, expense: Expe
     title: 'Nouvelle dépense',
     message: `Une nouvelle dépense de ${expense.amount.toLocaleString('fr-FR')} FCFA a été enregistrée: ${expense.description}`,
     read: false,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     relatedEntityId: expense.id
   };
 };

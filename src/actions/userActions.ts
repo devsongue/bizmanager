@@ -19,8 +19,8 @@ export async function getUsers(): Promise<ActionResult<User[]>> {
       password: user.password ?? undefined,
       role: user.role as UserRole,
       managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || [],
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     }));
     
     return { success: true, data: mappedUsers };
@@ -76,8 +76,8 @@ export async function createUser(userData: Omit<User, 'id' | 'createdAt' | 'upda
       password: user.password ?? undefined,
       role: user.role as UserRole,
       managedBusinessIds: [],
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
     
     return { success: true, data: mappedUser };
@@ -160,8 +160,8 @@ export async function updateUser(id: string, userData: Partial<Omit<User, 'id' |
       password: user.password ?? undefined,
       role: user.role as UserRole,
       managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || [],
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
     
     return { success: true, data: mappedUser };
@@ -205,8 +205,8 @@ export async function authenticateUser(email: string, password: string): Promise
         email: user.email,
         role: user.role as UserRole,
         managedBusinessIds: user.managedBusinesses?.map((business: any) => business.id) || [],
-        createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-        updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       };
       
       return { success: true, data: userWithoutPassword };
